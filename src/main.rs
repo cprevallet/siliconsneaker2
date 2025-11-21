@@ -9,6 +9,27 @@ fn main() {
     app.run();
 }
 
+fn max_vec(vector : Vec<f32>) -> f32  {
+    // Find the largest non-NaN in vector, or NaN otherwise:
+    let v = vector.iter().cloned().fold(0./0., f32::max);
+    return v;
+}
+
+fn min_vec(vector : Vec<f32>) -> f32  {
+    // Find the largest non-NaN in vector, or NaN otherwise:
+    let v = vector.iter().cloned().fold(0./0., f32::min);
+    return v;
+}
+
+fn get_plot_range(data : Vec<(f32, f32)>) -> (std::ops::Range<f32>, std::ops::Range<f32>) {
+    // Split vector of tuples into two vecs
+    let (x, y): (Vec<_>, Vec<_>) = data.into_iter().map(|(a, b)| (a, b)).unzip();    
+    // Find the range of the chart
+    let xrange : std::ops::Range<f32> = min_vec(x.clone())..max_vec(x.clone());
+    let yrange : std::ops::Range<f32> = min_vec(y.clone())..max_vec(y.clone());
+    return (xrange, yrange);
+}
+
 fn build_gui(app: &Application){
     let win = ApplicationWindow::builder().application(app).default_width(1024).default_height(768).title("Test").build();
     let drawing_area: DrawingArea = DrawingArea::builder().build();
@@ -30,7 +51,13 @@ fn build_gui(app: &Application){
         let _ = root.fill(&WHITE);
 
         let root = root.margin(10, 10, 10, 10);
+
+        //  Find the plot range (minx..maxx, miny..maxy)
+        let plot_range = get_plot_range(plotvals.clone());
+        
         // After this point, we should be able to construct a chart context
+        //
+       
         let mut chart = ChartBuilder::on(&root)
             // Set the caption of the chart
             .caption("This is our first plot", ("sans-serif", 40).into_font())
@@ -38,13 +65,13 @@ fn build_gui(app: &Application){
             .x_label_area_size(20)
             .y_label_area_size(40)
             // Finally attach a coordinate on the drawing area and make a chart context
-            .build_cartesian_2d(0f32..10f32, 0f32..10f32).unwrap();
+            .build_cartesian_2d(plot_range.0, plot_range.1).unwrap();
 
         // Then we can draw a mesh
         let _ = chart
             .configure_mesh()
             // We can customize the maximum number of labels allowed for each axis
-            .x_labels(5)
+            .x_labels(15)
             .y_labels(5)
             // We can also change the format of the label text
             .y_label_formatter(&|x| format!("{:.3}", x))
