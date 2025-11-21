@@ -28,6 +28,7 @@ fn min_vec(vector : Vec<f32>) -> f32  {
 
 // Split vector of tuples into two vecs
 fn get_plot_range(data : Vec<(f32, f32)>) -> (std::ops::Range<f32>, std::ops::Range<f32>) {
+    if data.len() == 0 {panic!("Can't calculate range. No values supplied.")};
     let (x, y): (Vec<_>, Vec<_>) = data.into_iter().map(|(a, b)| (a, b)).unzip();    
     // Find the range of the chart
     let xrange : std::ops::Range<f32> = min_vec(x.clone())..max_vec(x.clone());
@@ -65,7 +66,7 @@ fn get_xy(data : Vec<FitDataRecord>, x_field_name :  &str, y_field_name : &str) 
     let y : Vec<f64> = get_msg_record_field_as_vec(data.clone(), y_field_name);
     // Create vector of tuples from individual vectors.
 //  Convert values to 32 bit and create a tuple.
-    if x.len() == y.len() {
+    if (x.len() == y.len()) && (x.len() != 0) && (y.len() != 0) {
         for index in 0..x.len()-1 {
             xy_pairs.push((x[index] as f32, y[index] as f32));
         }
