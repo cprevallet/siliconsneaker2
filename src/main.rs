@@ -1,10 +1,9 @@
-use gtk4::glib::closure::IntoClosureReturnValue;
 use gtk4::prelude::*;
 use plotters::prelude::*;
 use gtk4::{Application, ApplicationWindow, DrawingArea};
 use gtk4::glib::clone;
 use std::fs::File;
-use fitparser::{profile::field_types::MesgNum, FitDataField, FitDataRecord};
+use fitparser::{profile::field_types::MesgNum, FitDataRecord};
 
 // Only God and I knew what this was doing when I wrote it.
 // Know only God knows.
@@ -80,7 +79,7 @@ fn build_gui(app: &Application){
 
     // Get values from fit file.
     let mut plotvals: Vec<(f32, f32)> = Vec::new();
-    println!("Parsing FIT files using Profile version: {:?}", fitparser::profile::VERSION);
+    //println!("Parsing FIT files using Profile version: {:?}", fitparser::profile::VERSION);
     let mut fp = File::open("tests/working.fit").expect("file not found");
     if let Ok(data) = fitparser::from_reader(&mut fp) {
         // plotvals = get_xy(data, "distance", "enhanced_speed");
@@ -103,7 +102,6 @@ fn build_gui(app: &Application){
 
         //  Find the plot range (minx..maxx, miny..maxy)
         let plot_range = get_plot_range(plotvals.clone());
-        println!("{:?}", plot_range);
         
         // After this point, we should be able to construct a chart context
         //
