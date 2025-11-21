@@ -82,17 +82,22 @@ fn build_gui(app: &Application){
     //println!("Parsing FIT files using Profile version: {:?}", fitparser::profile::VERSION);
     let mut fp = File::open("tests/working.fit").expect("file not found");
     if let Ok(data) = fitparser::from_reader(&mut fp) {
-        // plotvals = get_xy(data, "distance", "enhanced_speed");
+        plotvals = get_xy(data, "distance", "enhanced_speed");
+        //plotvals = get_xy(data, "abc", "denhanced_speed");
         // plotvals = get_xy(data, "distance", "enhanced_altitude");
         // plotvals = get_xy(data, "distance", "heart_rate");
-        plotvals = get_xy(data, "distance", "cadence");
+        // plotvals = get_xy(data, "distance", "cadence");
         // plotvals = get_xy(data, "distance", "position_lat");
         // plotvals = get_xy(data, "distance", "position_long");
     }
-
+    // Assign labels for the chart.
+    let caption : &str  = "Pace Plot";
+    let xlabel : &str  = "Distance (m)";
+    let ylabel : &str = "Speed (m/s)";
+    
     // Use a "closure" (anonymous function?) as the drawing area draw_func.
     // We pass a strong reference to the plot data (aka plotvals).
-    drawing_area.set_draw_func(clone!(#[strong] plotvals, move |_drawing_area, cr, width, height| {
+    drawing_area.set_draw_func(clone!(#[strong] plotvals, #[strong] caption, #[strong] xlabel, #[strong] ylabel, move |_drawing_area, cr, width, height| {
         // --- 🎨 Custom Drawing Logic Starts Here ---
  
         let root = plotters_cairo::CairoBackend::new(&cr, (width.try_into().unwrap(), height.try_into().unwrap())).unwrap().into_drawing_area();
@@ -108,7 +113,7 @@ fn build_gui(app: &Application){
        
         let mut chart = ChartBuilder::on(&root)
             // Set the caption of the chart
-            .caption("This is our first plot", ("sans-serif", 40).into_font())
+            .caption(caption, ("sans-serif", 40).into_font())
             // Set the size of the label region
             .x_label_area_size(100)
             .y_label_area_size(100)
@@ -122,8 +127,8 @@ fn build_gui(app: &Application){
             // We can customize the maximum number of labels allowed for each axis
             .x_labels(15)
             .y_labels(5)
-            .x_desc("Custom X Axis: Independent Variable")
-            .y_desc("Custom Y Axis: Independent Variable")
+            .x_desc(xlabel)
+            .y_desc(ylabel)
             // We can also change the format of the label text
             .y_label_formatter(&|x| format!("{:.3}", x))
             .draw();
