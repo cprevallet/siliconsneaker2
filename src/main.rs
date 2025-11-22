@@ -8,7 +8,20 @@ use fitparser::{profile::field_types::MesgNum, FitDataRecord};
 // Only God and I knew what this was doing when I wrote it.
 // Know only God knows.
 
-fn main() {
+// Global, compile-time constant strings
+const FIT_FILE_NAME: &'static str =  "tests/working.fit";
+// X_PARAM and Y_PARAM can have the value of:
+// distance
+// enhanced_altitude
+// enhanced_speed
+// heart_rate
+// cadence
+// position_lat
+// position_long
+const XPARAM: &'static str =  "distance";
+const YPARAM: &'static str =  "enhanced_speed";
+
+ fn main() {
     let app = Application::builder().build();
     app.connect_activate(build_gui);
     app.run();
@@ -81,16 +94,10 @@ fn build_gui(app: &Application){
     // Get values from fit file.
     let mut plotvals: Vec<(f32, f32)> = Vec::new();
     //println!("Parsing FIT files using Profile version: {:?}", fitparser::profile::VERSION);
-    let mut fp = File::open("tests/working.fit").expect("file not found");
+    let mut fp = File::open(FIT_FILE_NAME).expect("file not found");
     if let Ok(data) = fitparser::from_reader(&mut fp) {
-        plotvals = get_xy(data, "distance", "enhanced_speed");
-        //plotvals = get_xy(data, "abc", "denhanced_speed");
-        // plotvals = get_xy(data, "distance", "enhanced_altitude");
-        // plotvals = get_xy(data, "distance", "heart_rate");
-        // plotvals = get_xy(data, "distance", "cadence");
-        // plotvals = get_xy(data, "distance", "position_lat");
-        // plotvals = get_xy(data, "distance", "position_long");
-    }
+        plotvals = get_xy(data, XPARAM, YPARAM);
+   }
     // Assign labels for the chart.
     let caption : &str  = "Pace Plot";
     let xlabel : &str  = "Distance (m)";
