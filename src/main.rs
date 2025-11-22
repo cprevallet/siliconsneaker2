@@ -9,7 +9,7 @@ use fitparser::{profile::field_types::MesgNum, FitDataRecord};
 // Know only God knows.
 
 // Global, compile-time constant strings
-const FIT_FILE_NAME: &'static str =  "tests/working.fit";
+const FIT_FILE_NAME: &'static str =  "tests/working2.fit";
 // X_PARAM and Y_PARAM can have the value of:
 // distance
 // enhanced_altitude
@@ -19,12 +19,59 @@ const FIT_FILE_NAME: &'static str =  "tests/working.fit";
 // position_lat
 // position_long
 const XPARAM: &'static str =  "distance";
-const YPARAM: &'static str =  "enhanced_speed";
+const YPARAM: &'static str =  "enhanced_altitude";
 
  fn main() {
     let app = Application::builder().build();
     app.connect_activate(build_gui);
     app.run();
+}
+
+// Calculate the vector average.
+fn mean (data: &Vec<f32>) -> f32 {
+
+    let count = data.len();
+
+    // Handle empty data case to prevent division by zero
+    if count == 0 {
+        return 0.0;
+    }
+
+    let sum: f32 = data.iter().sum();
+    let mean = sum / (count as f32);
+    return mean
+
+}
+
+// Calculate the vector standard deviation.
+fn standard_deviation(data: &Vec<f32>) -> f32 {
+    let count = data.len();
+
+    // Handle empty data case to prevent division by zero.
+    if count == 0 {
+        return 0.0;
+    }
+    
+    // Calculate the mean (average).
+    // .sum() requires an explicit type annotation if not inferred
+    let sum: f32 = data.iter().sum();
+    let mean = sum / (count as f32);
+
+    // Calculate the variance.
+    // Variance is the average of the squared differences from the Mean.
+    let squared_differences_sum: f32 = data.iter()
+        // Map each element to its squared difference from the mean
+        .map(|&x| {
+            let diff = x - mean;
+            diff * diff
+        })
+        // Sum all the squared differences
+        .sum();
+
+    let variance = squared_differences_sum / (count as f32);
+
+    // Standard deviation is the square root of the variance.
+    return variance.sqrt()
 }
 
 // Find the largest non-NaN in vector, or NaN otherwise:
@@ -39,13 +86,19 @@ fn min_vec(vector : Vec<f32>) -> f32  {
     return v;
 }
 
-// Split vector of tuples into two vecs
+// Find the plot range values.
 fn get_plot_range(data : Vec<(f32, f32)>) -> (std::ops::Range<f32>, std::ops::Range<f32>) {
     if data.len() == 0 {panic!("Can't calculate range. No values supplied.")};
+    // Split vector of tuples into two vecs
     let (x, y): (Vec<_>, Vec<_>) = data.into_iter().map(|(a, b)| (a, b)).unzip();    
-    // Find the range of the chart
+    // Find the range of the chart, statistics says 95% should lie between +/3 sigma
+    // for a normal distribution.  Let's go with that for the range. 
+    let _mean_x = mean(&x);
+    let mean_y = mean(&y);
+    let _sigma_x = standard_deviation(&x);
+    let sigma_y = standard_deviation(&y);
     let xrange : std::ops::Range<f32> = min_vec(x.clone())..max_vec(x.clone());
-    let yrange : std::ops::Range<f32> = min_vec(y.clone())..max_vec(y.clone());
+    let yrange : std::ops::Range<f32> = mean_y - 3.0*sigma_y..mean_y + 3.0*sigma_y;
     return (xrange, yrange);
 }
 
@@ -71,17 +124,33 @@ fn get_msg_record_field_as_vec(data : Vec<FitDataRecord>, field_name :  &str) ->
     return field_vals;
 }
 
+// Convert speed (m/s) to pace(min/mile)
+fn cvt_to_pace(speed: f32) -> f32 {
+    if speed < 1.00 {
+        return 26.8224;  //avoid divide by zero
+    }
+    else {
+        return 26.8224 / speed;
+    }
+}
+
 // Retrieve raw values to plot from fit file.
 fn get_xy(data : Vec<FitDataRecord>, x_field_name :  &str, y_field_name : &str) ->  Vec<(f32, f32)>{
     let mut xy_pairs: Vec<(f32, f32)> = Vec::new();
     // Parameter can be distance, heart_rate, enhanced_speed, enhanced_altitude.
     let x : Vec<f64> = get_msg_record_field_as_vec(data.clone(), x_field_name);
     let y : Vec<f64> = get_msg_record_field_as_vec(data.clone(), y_field_name);
-    // Create vector of tuples from individual vectors.
-//  Convert values to 32 bit and create a tuple.
+    //  Convert values to 32 bit and create a tuple.
     if (x.len() == y.len()) && (x.len() != 0) && (y.len() != 0) {
         for index in 0..x.len()-1 {
-            xy_pairs.push((x[index] as f32, y[index] as f32));
+            //TODO This is ugly!  Need a better method to handle conversions.
+            if y_field_name != "enhanced_speed" {
+                xy_pairs.push((x[index] as f32, y[index] as f32));
+            } else {
+                // special case
+                let pace = cvt_to_pace(y[index] as f32);
+                xy_pairs.push((x[index] as f32, pace as f32));
+            }
         }
     };
     return xy_pairs;
@@ -101,11 +170,27 @@ fn build_gui(app: &Application){
     // Assign labels for the chart.
     let caption : &str  = "Pace Plot";
     let xlabel : &str  = "Distance (m)";
-    let ylabel : &str = "Speed (m/s)";
-    
+    let ylabel : &str = "Speed (m/s) -> Pace(min:mile)";
+
+    // Format the labels on the y-axis.
+    let num_formatter = |x:&f32| {
+            format!("{:.3}", x)
+        };
+
+    let pace_formatter = |x:&f32| {
+            let mins = x.trunc();
+            let secs = x - mins;
+            format!("{:02.0}:{:02.0}", mins, secs)
+        };
+
     // Use a "closure" (anonymous function?) as the drawing area draw_func.
     // We pass a strong reference to the plot data (aka plotvals).
-    drawing_area.set_draw_func(clone!(#[strong] plotvals, #[strong] caption, #[strong] xlabel, #[strong] ylabel, move |_drawing_area, cr, width, height| {
+    drawing_area.set_draw_func(clone!(#[strong] plotvals,
+                                      #[strong] caption,
+                                      #[strong] xlabel,
+                                      #[strong] ylabel,
+                                      #[strong] num_formatter,
+                                      #[strong] pace_formatter, move |_drawing_area, cr, width, height| {
         // --- 🎨 Custom Drawing Logic Starts Here ---
  
         let root = plotters_cairo::CairoBackend::new(&cr, (width.try_into().unwrap(), height.try_into().unwrap())).unwrap().into_drawing_area();
@@ -126,21 +211,30 @@ fn build_gui(app: &Application){
             .x_label_area_size(100)
             .y_label_area_size(100)
             // Finally attach a coordinate on the drawing area and make a chart context
-            // .build_cartesian_2d(plot_range.0, plot_range.1).unwrap();
             .build_cartesian_2d(plot_range.0, plot_range.1).unwrap();
 
         // Then we can draw a mesh
-        let _ = chart
-            .configure_mesh()
-            // We can customize the maximum number of labels allowed for each axis
-            .x_labels(15)
-            .y_labels(5)
-            .x_desc(xlabel)
-            .y_desc(ylabel)
-            // We can also change the format of the label text
-            .y_label_formatter(&|x| format!("{:.3}", x))
-            .draw();
-
+        if YPARAM == "enhanced_speed" {
+            let _ = chart
+                .configure_mesh()
+                // We can customize the maximum number of labels allowed for each axis
+                .x_labels(15)
+                .y_labels(5)
+                .x_desc(xlabel)
+                .y_desc(ylabel)
+                .y_label_formatter(&pace_formatter)
+                .draw();
+        } else {
+            let _ = chart
+                    .configure_mesh()
+                    // We can customize the maximum number of labels allowed for each axis
+                    .x_labels(15)
+                    .y_labels(5)
+                    .x_desc(xlabel)
+                    .y_desc(ylabel)
+                    .y_label_formatter(&num_formatter)
+                    .draw();
+        }
         // And we can draw something in the drawing area
         // We need to clone plotvals each time we make a call to LineSeries and PointSeries
         let _ = chart.draw_series(LineSeries::new(
