@@ -247,6 +247,7 @@ fn build_da() -> DrawingArea {
     return drawing_area;
 }
 
+// Convert semi-circles to degrees.
 fn semi_to_degrees(semi: f32) -> f64 {
     let factor: f64 = 2i64.pow(31u32) as f64;
     let deg_val: f64 = semi as f64 * 180f64 / factor;
