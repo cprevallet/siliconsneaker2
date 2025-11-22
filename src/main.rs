@@ -1,9 +1,9 @@
 use gtk4::prelude::*;
-use gtk4::{Application, ApplicationWindow, DrawingArea, Frame, Orientation, gdk};
+use gtk4::{gdk, Application, ApplicationWindow, DrawingArea, Frame, Orientation};
 use libshumate::prelude::*;
 use plotters::prelude::*;
 //use gtk4::glib::clone;
-use fitparser::{FitDataRecord, profile::field_types::MesgNum};
+use fitparser::{profile::field_types::MesgNum, FitDataRecord};
 use libshumate::{Coordinate, PathLayer, SimpleMap};
 use std::fs::File;
 
