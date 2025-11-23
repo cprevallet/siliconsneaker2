@@ -1,3 +1,4 @@
+use gtk4::gdk::Display;
 use gtk4::prelude::*;
 use gtk4::{
     Application, ApplicationWindow, Button, DrawingArea, FileChooserAction, FileChooserNative,
@@ -13,9 +14,6 @@ use std::io::ErrorKind;
 
 // Only God and I knew what this was doing when I wrote it.
 // Know only God knows.
-
-// Global, compile-time constant strings
-const FIT_FILE_NAME: &'static str = "tests/broken.fit";
 
 // Program entry point.
 fn main() {
@@ -329,12 +327,13 @@ fn build_gui(app: &Application) {
         .default_height(768)
         .title("Test")
         .build();
+
+    let outer_box = gtk4::Box::new(Orientation::Vertical, 10);
     // Main horizontal container to hold the two frames side-by-side
     let main_box = gtk4::Box::new(Orientation::Horizontal, 10);
     let frame_left = Frame::builder().build();
     let frame_right = Frame::builder().build();
     let btn = Button::with_label("Select a file...");
-    //    let file_select = FileChooserDialog::builder().build();
     let label_path = Label::new(Some("No file selected"));
 
     let frame_left_handle = frame_left.clone();
@@ -395,7 +394,6 @@ fn build_gui(app: &Application) {
             } else {
                 println!("User cancelled");
             }
-
             // unlike FileChooserDialog, 'native' creates a transient reference.
             // It's good practice to drop references, but GTK handles the cleanup
             // once it goes out of scope or the window closes.
@@ -405,10 +403,38 @@ fn build_gui(app: &Application) {
         native.show();
     });
 
+    // 1. Get the default display (connection to the window server)
+    if let Some(display) = Display::default() {
+        // 2. Get the list of monitors (returns a ListModel)
+        let monitors = display.monitors();
+
+        // 3. We typically want the first monitor (primary)
+        // Note: In a multi-monitor setup, you might want to find which monitor
+        // the window is actually on, but during "build_ui", the window isn't visible yet.
+        if let Some(monitor_obj) = monitors.item(0) {
+            // Downcast the generic object to a GdkMonitor
+            if let Ok(monitor) = monitor_obj.downcast::<gdk::Monitor>() {
+                // 4. Get geometry (x, y, width, height)
+                let geometry = monitor.geometry();
+
+                let target_width = (geometry.width() as f64 * 0.80) as i32;
+                let target_height = (geometry.height() as f64 * 0.80) as i32;
+
+                // 5. Apply the size request
+                win.set_width_request(target_width);
+                win.set_height_request(target_height);
+
+                println!("Screen: {}x{}", geometry.width(), geometry.height());
+                println!("Box set to: {}x{}", target_width, target_height);
+            }
+        }
+    }
     main_box.append(&frame_left);
     main_box.append(&frame_right);
-    main_box.append(&btn);
     main_box.set_homogeneous(true); // Ensures both frames take exactly half the window width
-    win.set_child(Some(&main_box));
+    outer_box.append(&btn);
+    outer_box.append(&main_box);
+    main_box.set_height_request(1000);
+    win.set_child(Some(&outer_box));
     win.present();
 }
