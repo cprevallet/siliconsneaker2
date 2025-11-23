@@ -12,17 +12,8 @@ use std::fs::File;
 
 // Global, compile-time constant strings
 const FIT_FILE_NAME: &'static str = "tests/broken.fit";
-// X_PARAM and Y_PARAM can have the value of:
-// distance
-// enhanced_altitude
-// enhanced_speed
-// heart_rate
-// cadence
-// position_lat
-// position_long
-const XPARAM: &'static str = "distance";
-const YPARAM: &'static str = "enhanced_altitude";
 
+// Program entry point.
 fn main() {
     let app = Application::builder().build();
     app.connect_activate(build_gui);
@@ -154,55 +145,8 @@ fn get_xy(data: &Vec<FitDataRecord>, x_field_name: &str, y_field_name: &str) -> 
 // Build drawing area.
 fn build_da(data: &Vec<FitDataRecord>) -> DrawingArea {
     let drawing_area: DrawingArea = DrawingArea::builder().build();
-    // Formatters for the labels on the y-axis.
-    let num_formatter = |x: &f32| format!("{:.3}", x);
-    let pace_formatter = |x: &f32| {
-        let mins = x.trunc();
-        let secs = x - mins;
-        format!("{:02.0}:{:02.0}", mins, secs)
-    };
-    // Wrap up the data structure to use in draw_func.
-    struct PlotData<'a> {
-        plotvals: Vec<(f32, f32)>,
-        caption: &'a str,
-        xlabel: &'a str,
-        ylabel: &'a str,
-        plot_range: (std::ops::Range<f32>, std::ops::Range<f32>),
-        y_formatter: Box<dyn Fn(&f32) -> String>,
-    }
-    // Get values from fit file.
-    let plotvals = get_xy(&data, XPARAM, YPARAM);
-    //  Find the plot range (minx..maxx, miny..maxy)
-    let plot_range = get_plot_range(&plotvals.clone());
-    let mut pd = PlotData {
-        plotvals: plotvals,
-        caption: "",
-        xlabel: "Distance",
-        ylabel: "",
-        plot_range: plot_range,
-        y_formatter: Box::new(num_formatter),
-    };
-    if YPARAM == "enhanced_altitude" {
-        pd.caption = "Elevation";
-        pd.ylabel = "Elevation";
-    }
-    if YPARAM == "cadence" {
-        pd.caption = "Cadence";
-        pd.ylabel = "Cadence";
-    }
-    if YPARAM == "heart_rate" {
-        pd.caption = "Heart Rate";
-        pd.ylabel = "Heart Rate";
-    }
-    // Special handling for pace plots.
-    if YPARAM == "enhanced_speed" {
-        pd.caption = "Pace";
-        pd.ylabel = "Pace(min/mile)";
-        pd.y_formatter = Box::new(pace_formatter);
-    }
     // Need to clone to use inside the closure.
     let d = data.clone();
-
     // Use a "closure" (anonymous function?) as the drawing area draw_func.
     // The pd struct is passed in.
     drawing_area.set_draw_func(move |_drawing_area, cr, width, height| {
@@ -214,10 +158,9 @@ fn build_da(data: &Vec<FitDataRecord>) -> DrawingArea {
         )
         .unwrap()
         .into_drawing_area();
-
         let _ = root.fill(&WHITE);
         let areas = root.split_evenly((2, 2));
-
+        // Declare and initialize.
         let num_formatter = |x: &f32| format!("{:.3}", x);
         let pace_formatter = |x: &f32| {
             let mins = x.trunc();
@@ -231,10 +174,38 @@ fn build_da(data: &Vec<FitDataRecord>) -> DrawingArea {
         let mut plot_range: (std::ops::Range<f32>, std::ops::Range<f32>) =
             (0_f32..1_f32, 0_f32..1_f32);
         let mut y_formatter: Box<dyn Fn(&f32) -> String> = Box::new(num_formatter);
+        let mut color = &RED;
 
         for (a, idx) in areas.iter().zip(1..) {
             //let root = root.margin(50, 50, 50, 50);
             // After this point, we should be able to construct a chart context
+            if idx == 1 {
+                plotvals = get_xy(&d, "distance", "enhanced_altitude");
+                plot_range = get_plot_range(&plotvals.clone());
+                y_formatter = Box::new(num_formatter);
+                caption = "Elevation";
+                ylabel = "Elevation(meters)";
+                xlabel = "Distance(meters)";
+                color = &RED;
+            }
+            if idx == 2 {
+                plotvals = get_xy(&d, "distance", "heart_rate");
+                plot_range = get_plot_range(&plotvals.clone());
+                y_formatter = Box::new(num_formatter);
+                caption = "Heart rate";
+                ylabel = "Heart rate(bpm)";
+                xlabel = "Distance(meters)";
+                color = &BLUE;
+            }
+            if idx == 3 {
+                plotvals = get_xy(&d, "distance", "cadence");
+                plot_range = get_plot_range(&plotvals.clone());
+                y_formatter = Box::new(num_formatter);
+                caption = "Cadence";
+                ylabel = "Cadence";
+                xlabel = "Distance(meters)";
+                color = &YELLOW;
+            }
             if idx == 4 {
                 plotvals = get_xy(&d, "distance", "enhanced_speed");
                 plot_range = get_plot_range(&plotvals.clone());
@@ -242,13 +213,14 @@ fn build_da(data: &Vec<FitDataRecord>) -> DrawingArea {
                 caption = "Pace";
                 ylabel = "Pace(min/mile)";
                 xlabel = "Distance(meters)";
+                color = &GREEN;
             }
             let mut chart = ChartBuilder::on(&a)
                 // Set the caption of the chart
-                .caption(caption, ("sans-serif", 40).into_font())
+                .caption(caption, ("sans-serif", 16).into_font())
                 // Set the size of the label region
-                .x_label_area_size(100)
-                .y_label_area_size(100)
+                .x_label_area_size(40)
+                .y_label_area_size(60)
                 // Finally attach a coordinate on the drawing area and make a chart context
                 .build_cartesian_2d(plot_range.clone().0, plot_range.clone().1)
                 .unwrap();
@@ -263,12 +235,11 @@ fn build_da(data: &Vec<FitDataRecord>) -> DrawingArea {
                 .draw();
             // // And we can draw something in the drawing area
             // We need to clone plotvals each time we make a call to LineSeries and PointSeries
-            let _ = chart.draw_series(LineSeries::new(plotvals.clone(), &RED));
+            let _ = chart.draw_series(LineSeries::new(plotvals.clone(), color));
         }
-
         let _ = root.present();
         // --- Custom Drawing Logic Ends Here ---
-    });
+    }); // --- End closure. 
     return drawing_area;
 }
 
