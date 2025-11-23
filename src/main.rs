@@ -1,5 +1,7 @@
 use gtk4::prelude::*;
-use gtk4::{Application, ApplicationWindow, DrawingArea, Frame, Orientation, gdk};
+use gtk4::{
+    Application, ApplicationWindow, Button, DrawingArea, FileChooserDialog, Frame, Orientation, gdk,
+};
 use libshumate::prelude::*;
 use plotters::prelude::*;
 //use gtk4::glib::clone;
@@ -330,29 +332,38 @@ fn build_gui(app: &Application) {
     let main_box = gtk4::Box::new(Orientation::Horizontal, 10);
     let frame_left = Frame::builder().build();
     let frame_right = Frame::builder().build();
+    let btn = Button::with_label("Select a file...");
+    let file_select = FileChooserDialog::builder().build();
+
+    let frame_left_handle = frame_left.clone();
+    let frame_right_handle = frame_right.clone();
+    btn.connect_clicked(move |_| {
+        // Get values from fit file.
+        let file_result = File::open(FIT_FILE_NAME);
+        let mut file = match file_result {
+            Ok(file) => file,
+            Err(error) => match error.kind() {
+                // Handle specifically "Not Found"
+                ErrorKind::NotFound => {
+                    panic!("File not found.");
+                }
+                _ => {
+                    panic!("Hmmm...unknown error. Check file permissions?");
+                }
+            },
+        };
+        // Read the fit file and create the map and graph drawing area.
+        if let Ok(data) = fitparser::from_reader(&mut file) {
+            let shumate_map = build_map(&data);
+            frame_left_handle.set_child(Some(&shumate_map));
+            let da = build_da(&data);
+            frame_right_handle.set_child(Some(&da));
+        }
+    });
+
     main_box.append(&frame_left);
     main_box.append(&frame_right);
-    // Get values from fit file.
-    let file_result = File::open(FIT_FILE_NAME);
-    let mut file = match file_result {
-        Ok(file) => file,
-        Err(error) => match error.kind() {
-            // Handle specifically "Not Found"
-            ErrorKind::NotFound => {
-                panic!("File not found.");
-            }
-            _ => {
-                panic!("Hmmm...unknown error. Check file permissions?");
-            }
-        },
-    };
-    // Read the fit file and create the map and graph drawing area.
-    if let Ok(data) = fitparser::from_reader(&mut file) {
-        let shumate_map = build_map(&data);
-        frame_left.set_child(Some(&shumate_map));
-        let da = build_da(&data);
-        frame_right.set_child(Some(&da));
-    }
+    main_box.append(&btn);
     main_box.set_homogeneous(true); // Ensures both frames take exactly half the window width
     win.set_child(Some(&main_box));
     win.present();
