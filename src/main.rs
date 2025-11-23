@@ -81,7 +81,7 @@ fn min_vec(vector: Vec<f32>) -> f32 {
 }
 
 // Find the plot range values.
-fn get_plot_range(data: Vec<(f32, f32)>) -> (std::ops::Range<f32>, std::ops::Range<f32>) {
+fn get_plot_range(data: &Vec<(f32, f32)>) -> (std::ops::Range<f32>, std::ops::Range<f32>) {
     if data.len() == 0 {
         panic!("Can't calculate range. No values supplied.")
     };
@@ -130,7 +130,7 @@ fn cvt_to_pace(speed: f32) -> f32 {
 }
 
 // Retrieve raw values to plot from fit file.
-fn get_xy(data: Vec<FitDataRecord>, x_field_name: &str, y_field_name: &str) -> Vec<(f32, f32)> {
+fn get_xy(data: &Vec<FitDataRecord>, x_field_name: &str, y_field_name: &str) -> Vec<(f32, f32)> {
     let mut xy_pairs: Vec<(f32, f32)> = Vec::new();
     // Parameter can be distance, heart_rate, enhanced_speed, enhanced_altitude.
     let x: Vec<f64> = get_msg_record_field_as_vec(data.clone(), x_field_name);
@@ -171,9 +171,9 @@ fn build_da(data: &Vec<FitDataRecord>) -> DrawingArea {
         y_formatter: Box<dyn Fn(&f32) -> String>,
     }
     // Get values from fit file.
-    let plotvals = get_xy(data.clone().to_vec(), XPARAM, YPARAM);
+    let plotvals = get_xy(&data, XPARAM, YPARAM);
     //  Find the plot range (minx..maxx, miny..maxy)
-    let plot_range = get_plot_range(plotvals.clone());
+    let plot_range = get_plot_range(&plotvals.clone());
     let mut pd = PlotData {
         plotvals: plotvals,
         caption: "",
@@ -200,10 +200,13 @@ fn build_da(data: &Vec<FitDataRecord>) -> DrawingArea {
         pd.ylabel = "Pace(min/mile)";
         pd.y_formatter = Box::new(pace_formatter);
     }
+    // Need to clone to use inside the closure.
+    let d = data.clone();
 
     // Use a "closure" (anonymous function?) as the drawing area draw_func.
     // The pd struct is passed in.
     drawing_area.set_draw_func(move |_drawing_area, cr, width, height| {
+        //        println!("{:?}", d);
         // --- 🎨 Custom Drawing Logic Starts Here ---
         let root = plotters_cairo::CairoBackend::new(
             &cr,
@@ -211,31 +214,37 @@ fn build_da(data: &Vec<FitDataRecord>) -> DrawingArea {
         )
         .unwrap()
         .into_drawing_area();
+
         let _ = root.fill(&WHITE);
-        let root = root.margin(50, 50, 50, 50);
-        // After this point, we should be able to construct a chart context
-        //
-        let mut chart = ChartBuilder::on(&root)
-            // Set the caption of the chart
-            .caption(pd.caption, ("sans-serif", 40).into_font())
-            // Set the size of the label region
-            .x_label_area_size(100)
-            .y_label_area_size(100)
-            // Finally attach a coordinate on the drawing area and make a chart context
-            .build_cartesian_2d(pd.plot_range.clone().0, pd.plot_range.clone().1)
-            .unwrap();
-        let _ = chart
-            .configure_mesh()
-            // We can customize the maximum number of labels allowed for each axis
-            .x_labels(15)
-            .y_labels(5)
-            .x_desc(pd.xlabel)
-            .y_desc(pd.ylabel)
-            .y_label_formatter(&pd.y_formatter)
-            .draw();
-        // // And we can draw something in the drawing area
-        // We need to clone plotvals each time we make a call to LineSeries and PointSeries
-        let _ = chart.draw_series(LineSeries::new(pd.plotvals.clone(), &RED));
+        let areas = root.split_evenly((2, 2));
+
+        for a in areas {
+            //let root = root.margin(50, 50, 50, 50);
+            // After this point, we should be able to construct a chart context
+            //
+            let mut chart = ChartBuilder::on(&a)
+                // Set the caption of the chart
+                .caption(pd.caption, ("sans-serif", 40).into_font())
+                // Set the size of the label region
+                .x_label_area_size(100)
+                .y_label_area_size(100)
+                // Finally attach a coordinate on the drawing area and make a chart context
+                .build_cartesian_2d(pd.plot_range.clone().0, pd.plot_range.clone().1)
+                .unwrap();
+            let _ = chart
+                .configure_mesh()
+                // We can customize the maximum number of labels allowed for each axis
+                .x_labels(15)
+                .y_labels(5)
+                .x_desc(pd.xlabel)
+                .y_desc(pd.ylabel)
+                .y_label_formatter(&pd.y_formatter)
+                .draw();
+            // // And we can draw something in the drawing area
+            // We need to clone plotvals each time we make a call to LineSeries and PointSeries
+            let _ = chart.draw_series(LineSeries::new(pd.plotvals.clone(), &RED));
+        }
+
         let _ = root.present();
         // --- Custom Drawing Logic Ends Here ---
     });
@@ -273,7 +282,7 @@ fn build_map(data: &Vec<FitDataRecord>) -> SimpleMap {
         .expect("Could not retrieve map source.");
     map.set_map_source(Some(&source));
     // Get values from fit file.
-    let run_path = get_xy(data.clone().to_vec(), "position_lat", "position_long");
+    let run_path = get_xy(&data, "position_lat", "position_long");
     // Call the function to add the path layer
     add_path_layer_to_map(&map, run_path);
     let viewport = map.viewport().expect("Couldn't get viewport.");
