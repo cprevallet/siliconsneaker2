@@ -167,6 +167,7 @@ fn get_xy(data: &Vec<FitDataRecord>, x_field_name: &str, y_field_name: &str) -> 
 // Build drawing area.
 fn build_da(data: &Vec<FitDataRecord>) -> DrawingArea {
     let drawing_area: DrawingArea = DrawingArea::builder().build();
+    drawing_area.set_height_request(600); //need at least this much for legibility
     // Need to clone to use inside the closure.
     let d = data.clone();
     // Use a "closure" (anonymous function?) as the drawing area draw_func.
@@ -319,12 +320,46 @@ fn build_map(data: &Vec<FitDataRecord>) -> SimpleMap {
     return map;
 }
 
+// Find out how many pixels we have to work with.
+fn get_geometry() -> (i32, i32) {
+    // 1. Get the default display (connection to the window server)
+    if let Some(display) = Display::default() {
+        // 2. Get the list of monitors (returns a ListModel)
+        let monitors = display.monitors();
+
+        // 3. We typically want the first monitor (primary)
+        // Note: In a multi-monitor setup, you might want to find which monitor
+        // the window is actually on, but during "build_ui", the window isn't visible yet.
+        if let Some(monitor_obj) = monitors.item(0) {
+            // Downcast the generic object to a GdkMonitor
+            if let Ok(monitor) = monitor_obj.downcast::<gdk::Monitor>() {
+                // 4. Get geometry (x, y, width, height)
+                let geometry = monitor.geometry();
+
+                let target_width = (geometry.width() as f64 * 0.80) as i32;
+                let target_height = (geometry.height() as f64 * 0.80) as i32;
+                return (target_width, target_height);
+
+                // 5. Apply the size request
+                // win.set_width_request(target_width);
+                // win.set_height_request(target_height);
+                //win.set_default_size(target_width, target_height);
+                //win.set_default_size(target_width, target_height);
+
+                // println!("Screen: {}x{}", geometry.width(), geometry.height());
+                // println!("Win set to: {}x{}", target_width, target_height);
+            }
+        }
+    }
+    return (1024, 768);
+}
 // Create the GUI.
 fn build_gui(app: &Application) {
+    let (width, height) = get_geometry();
     let win = ApplicationWindow::builder()
         .application(app)
-        .default_width(1024)
-        .default_height(768)
+        .default_width(width)
+        .default_height(height)
         .title("Test")
         .build();
 
@@ -403,39 +438,11 @@ fn build_gui(app: &Application) {
         native.show();
     });
 
-    // // 1. Get the default display (connection to the window server)
-    // if let Some(display) = Display::default() {
-    //     // 2. Get the list of monitors (returns a ListModel)
-    //     let monitors = display.monitors();
-
-    //     // 3. We typically want the first monitor (primary)
-    //     // Note: In a multi-monitor setup, you might want to find which monitor
-    //     // the window is actually on, but during "build_ui", the window isn't visible yet.
-    //     if let Some(monitor_obj) = monitors.item(0) {
-    //         // Downcast the generic object to a GdkMonitor
-    //         if let Ok(monitor) = monitor_obj.downcast::<gdk::Monitor>() {
-    //             // 4. Get geometry (x, y, width, height)
-    //             let geometry = monitor.geometry();
-
-    //             let target_width = (geometry.width() as f64 * 0.80) as i32;
-    //             let target_height = (geometry.height() as f64 * 0.80) as i32;
-
-    //             // 5. Apply the size request
-    //             // win.set_width_request(target_width);
-    //             // win.set_height_request(target_height);
-    //             win.set_default_size(target_width, target_height);
-
-    //             println!("Screen: {}x{}", geometry.width(), geometry.height());
-    //             println!("Win set to: {}x{}", target_width, target_height);
-    //         }
-    //     }
-    // }
     main_box.append(&frame_left);
     main_box.append(&frame_right);
     main_box.set_homogeneous(true); // Ensures both frames take exactly half the window width
     outer_box.append(&btn);
     outer_box.append(&main_box);
-    main_box.set_height_request(1000);
     win.set_child(Some(&outer_box));
     win.present();
 }
