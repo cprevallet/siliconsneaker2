@@ -420,16 +420,33 @@ fn build_summary(data: &Vec<FitDataRecord>, text_buffer: &TextBuffer) {
     let mut start = text_buffer.start_iter();
     let mut end = text_buffer.end_iter();
     text_buffer.delete(&mut start, &mut end);
+    let mut lap_index: u8 = 0;
+    let mut lap_str = format!(
+        "------------------------------ Lap {}--------------------------------\n",
+        lap_index
+    );
     for item in data {
         match item.kind() {
             MesgNum::Session | MesgNum::Lap => {
                 // print all the data records in FIT file
                 //println!("{:#?}", item.fields());
                 if item.kind() == MesgNum::Session {
-                    text_buffer.insert(&mut end, "################ Session ###############\n");
+                    text_buffer.insert(&mut end, "\n");
+                    text_buffer.insert(
+                        &mut end,
+                        "============================ Session ==================================\n",
+                    );
+                    text_buffer.insert(&mut end, "\n");
                 }
                 if item.kind() == MesgNum::Lap {
-                    text_buffer.insert(&mut end, "################ Lap ###################\n");
+                    lap_index = lap_index + 1;
+                    lap_str = format!(
+                        "------------------------------ Lap {}-----------------------------------\n",
+                        lap_index
+                    );
+                    text_buffer.insert(&mut end, "\n");
+                    text_buffer.insert(&mut end, &lap_str);
+                    text_buffer.insert(&mut end, "\n");
                 }
                 // Retrieve the FitDataField struct.
                 for fld in item.fields().iter() {
