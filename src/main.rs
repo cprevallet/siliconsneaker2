@@ -422,11 +422,15 @@ fn build_summary(data: &Vec<FitDataRecord>, text_buffer: &TextBuffer) {
     text_buffer.delete(&mut start, &mut end);
     for item in data {
         match item.kind() {
-            MesgNum::Session => {
+            MesgNum::Session | MesgNum::Lap => {
                 // print all the data records in FIT file
                 //println!("{:#?}", item.fields());
-
-                text_buffer.insert(&mut end, "################ Session ###############\n");
+                if item.kind() == MesgNum::Session {
+                    text_buffer.insert(&mut end, "################ Session ###############\n");
+                }
+                if item.kind() == MesgNum::Lap {
+                    text_buffer.insert(&mut end, "################ Lap ###################\n");
+                }
                 // Retrieve the FitDataField struct.
                 for fld in item.fields().iter() {
                     match fld.name() {
@@ -436,7 +440,7 @@ fn build_summary(data: &Vec<FitDataRecord>, text_buffer: &TextBuffer) {
                         | "end_position_long" => {
                             let semi: i64 = fld.value().try_into().expect("conversion failed"); //semicircles
                             let degrees = semi_to_degrees(semi as f32);
-                            let value_str = format!("{:<40}: {degrees:6.3}°\n", fld.name(),);
+                            let value_str = format!("{:<40}: {degrees:<6.3}°\n", fld.name(),);
                             text_buffer.insert(&mut end, &value_str);
                         }
 
@@ -456,22 +460,26 @@ fn build_summary(data: &Vec<FitDataRecord>, text_buffer: &TextBuffer) {
                         | "sub_sport"
                         | "timestamp"
                         | "start_time" => {
-                            let value_str =
-                                format!("{:<40}: {:#} {:}\n", fld.name(), fld.value(), fld.units());
+                            let value_str = format!(
+                                "{:<40}: {:<#} {:<}\n",
+                                fld.name(),
+                                fld.value(),
+                                fld.units()
+                            );
                             text_buffer.insert(&mut end, &value_str);
                         }
                         "total_ascent" | "total_descent" => {
                             let val: f64 = fld.value().clone().try_into().unwrap();
                             let val_cvt = cvt_altitude(val as f32);
                             let value_str =
-                                format!("{:<40}: {:#} {:}\n", fld.name(), val_cvt, "feet");
+                                format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "feet");
                             text_buffer.insert(&mut end, &value_str);
                         }
                         "total_distance" => {
                             let val: f64 = fld.value().clone().try_into().unwrap();
                             let val_cvt = cvt_distance(val as f32);
                             let value_str =
-                                format!("{:<40}: {:#} {:}\n", fld.name(), val_cvt, "miles");
+                                format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "miles");
                             text_buffer.insert(&mut end, &value_str);
                         }
                         "total_elapsed_time" | "total_timer_time" => {
@@ -490,14 +498,14 @@ fn build_summary(data: &Vec<FitDataRecord>, text_buffer: &TextBuffer) {
                             let val: i64 = fld.value().try_into().expect("conversion failed");
                             let val_cvt = cvt_temperature(val as f32);
                             let value_str =
-                                format!("{:<40}: {:#} {:}\n", fld.name(), val_cvt, "°F");
+                                format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "°F");
                             text_buffer.insert(&mut end, &value_str);
                         }
                         "enhanced_avg_speed" | "enhanced_max_speed" => {
                             let val: f64 = fld.value().clone().try_into().unwrap();
                             let val_cvt = cvt_pace(val as f32);
                             let value_str =
-                                format!("{:<40}: {:#} {:}\n", fld.name(), val_cvt, "min/mile");
+                                format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "min/mile");
                             text_buffer.insert(&mut end, &value_str);
                         }
                         _ => print!("{}", ""), // matches other patterns
