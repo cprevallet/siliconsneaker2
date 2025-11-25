@@ -168,6 +168,17 @@ fn semi_to_degrees(semi: f32) -> f64 {
     return deg_val;
 }
 
+// Convert elapsed time in secs to hr,:min,sec.
+fn cvt_elapsed_time(time_in_sec: f32) -> (i32, i32, i32) {
+    let t = time_in_sec / 3600.0;
+    let hr = t.trunc();
+    let minsec = t.fract() * 60.0;
+    let min = minsec.trunc();
+    let s = minsec.fract() * 60.0;
+    let sec = s.trunc();
+    return (hr as i32, min as i32, sec as i32);
+}
+
 // Retrieve converted values to plot from fit file.
 fn get_xy(data: &Vec<FitDataRecord>, x_field_name: &str, y_field_name: &str) -> Vec<(f32, f32)> {
     let mut x_user: Vec<f32> = Vec::new();
@@ -418,20 +429,77 @@ fn build_summary(data: &Vec<FitDataRecord>, text_buffer: &TextBuffer) {
                 text_buffer.insert(&mut end, "################ Session ###############\n");
                 // Retrieve the FitDataField struct.
                 for fld in item.fields().iter() {
-                    match fld.number() {
-                        3_u8..=4_u8 | 29_u8..=39_u8 => {
+                    match fld.name() {
+                        "start_position_lat"
+                        | "start_position_long"
+                        | "end_position_lat"
+                        | "end_position_long" => {
                             let semi: i64 = fld.value().try_into().expect("conversion failed"); //semicircles
                             let degrees = semi_to_degrees(semi as f32);
                             let value_str = format!("{:<40}: {degrees:6.3}°\n", fld.name(),);
                             text_buffer.insert(&mut end, &value_str);
                         }
 
-                        0_u8..=2_u8 | 5_u8..=28_u8 | 40_u8..=253_u8 => {
+                        "total_strides"
+                        | "total_calories"
+                        | "avg_heart_rate"
+                        | "max_heart_rate"
+                        | "avg_running_cadence"
+                        | "max_running_cadence"
+                        | "total_training_effect"
+                        | "first_lap_index"
+                        | "num_laps"
+                        | "avg_fractional_cadence"
+                        | "max_fractional_cadence"
+                        | "total_anaerobic_training_effect"
+                        | "sport"
+                        | "sub_sport"
+                        | "timestamp"
+                        | "start_time" => {
                             let value_str =
                                 format!("{:<40}: {:#} {:}\n", fld.name(), fld.value(), fld.units());
                             text_buffer.insert(&mut end, &value_str);
                         }
-
+                        "total_ascent" | "total_descent" => {
+                            let val: f64 = fld.value().clone().try_into().unwrap();
+                            let val_cvt = cvt_altitude(val as f32);
+                            let value_str =
+                                format!("{:<40}: {:#} {:}\n", fld.name(), val_cvt, "feet");
+                            text_buffer.insert(&mut end, &value_str);
+                        }
+                        "total_distance" => {
+                            let val: f64 = fld.value().clone().try_into().unwrap();
+                            let val_cvt = cvt_distance(val as f32);
+                            let value_str =
+                                format!("{:<40}: {:#} {:}\n", fld.name(), val_cvt, "miles");
+                            text_buffer.insert(&mut end, &value_str);
+                        }
+                        "total_elapsed_time" | "total_timer_time" => {
+                            let val: f64 = fld.value().clone().try_into().unwrap();
+                            let val_cvt = cvt_elapsed_time(val as f32);
+                            let value_str = format!(
+                                "{:<40}: {:02}:{:02}:{:02}\n",
+                                fld.name(),
+                                val_cvt.0,
+                                val_cvt.1,
+                                val_cvt.2
+                            );
+                            text_buffer.insert(&mut end, &value_str);
+                        }
+                        "min_temperature" | "max_temperature" | "avg_temperature" => {
+                            let val: i64 = fld.value().try_into().expect("conversion failed");
+                            let val_cvt = cvt_temperature(val as f32);
+                            let value_str =
+                                format!("{:<40}: {:#} {:}\n", fld.name(), val_cvt, "°F");
+                            text_buffer.insert(&mut end, &value_str);
+                        }
+                        "enhanced_avg_speed" | "enhanced_max_speed" => {
+                            let val: f64 = fld.value().clone().try_into().unwrap();
+                            let val_cvt = cvt_pace(val as f32);
+                            let value_str =
+                                format!("{:<40}: {:#} {:}\n", fld.name(), val_cvt, "min/mile");
+                            text_buffer.insert(&mut end, &value_str);
+                        }
                         _ => print!("{}", ""), // matches other patterns
                     }
                 }
