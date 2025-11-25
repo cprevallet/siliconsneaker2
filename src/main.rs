@@ -2,7 +2,7 @@ use gtk4::gdk::Display;
 use gtk4::prelude::*;
 use gtk4::{
     Application, ApplicationWindow, Button, DrawingArea, FileChooserAction, FileChooserNative,
-    Frame, Label, Orientation, ResponseType, ScrolledWindow, TextBuffer, TextIter, TextView, gdk,
+    Frame, Label, Orientation, ResponseType, ScrolledWindow, TextBuffer, TextView, gdk,
 };
 use libshumate::prelude::*;
 use plotters::prelude::*;
@@ -159,6 +159,13 @@ fn cvt_altitude(altitude: f32) -> f32 {
 // Convert temperature deg C  to deg F.
 fn cvt_temperature(temperature: f32) -> f32 {
     return temperature * 1.8 + 32.0;
+}
+
+// Convert semi-circles to degrees.
+fn semi_to_degrees(semi: f32) -> f64 {
+    let factor: f64 = 2i64.pow(31u32) as f64;
+    let deg_val: f64 = semi as f64 * 180f64 / factor;
+    return deg_val;
 }
 
 // Retrieve converted values to plot from fit file.
@@ -348,13 +355,6 @@ fn build_da(data: &Vec<FitDataRecord>) -> DrawingArea {
     return drawing_area;
 }
 
-// Convert semi-circles to degrees.
-fn semi_to_degrees(semi: f32) -> f64 {
-    let factor: f64 = 2i64.pow(31u32) as f64;
-    let deg_val: f64 = semi as f64 * 180f64 / factor;
-    return deg_val;
-}
-
 // Adds a PathLayer with a path of given coordinates to the map.
 fn add_path_layer_to_map(map: &SimpleMap, path_points: Vec<(f32, f32)>) {
     // Define the RGBA color using the builder pattern for gtk4::gdk::RGBA
@@ -422,14 +422,13 @@ fn build_summary(data: &Vec<FitDataRecord>, text_buffer: &TextBuffer) {
                         3_u8..=4_u8 | 29_u8..=39_u8 => {
                             let semi: i64 = fld.value().try_into().expect("conversion failed"); //semicircles
                             let degrees = semi_to_degrees(semi as f32);
-                            let value_str =
-                                format!("{:3} {degrees}°, Units = degrees\n", fld.name(),);
+                            let value_str = format!("{:<40}: {degrees:6.3}°\n", fld.name(),);
                             text_buffer.insert(&mut end, &value_str);
                         }
 
                         0_u8..=2_u8 | 5_u8..=28_u8 | 40_u8..=253_u8 => {
                             let value_str =
-                                format!("{} {:#}, {}\n", fld.name(), fld.value(), fld.units());
+                                format!("{:<40}: {:#} {:}\n", fld.name(), fld.value(), fld.units());
                             text_buffer.insert(&mut end, &value_str);
                         }
 
@@ -480,6 +479,7 @@ fn build_gui(app: &Application) {
     let main_box = gtk4::Box::new(Orientation::Horizontal, 10);
     let inner_box = gtk4::Box::new(Orientation::Vertical, 10);
     let text_view = TextView::builder().build();
+    text_view.set_monospace(true);
     let text_buffer = text_view.buffer();
 
     main_box.set_vexpand(true);
