@@ -293,8 +293,14 @@ fn get_xy(data: &Vec<FitDataRecord>, x_field_name: &str, y_field_name: &str) -> 
     let x: Vec<f64> = get_msg_record_field_as_vec(data.clone(), x_field_name);
     let y: Vec<f64> = get_msg_record_field_as_vec(data.clone(), y_field_name);
     //  Convert values to 32 bit and create a tuple.
-    if (x.len() == y.len()) && (x.len() != 0) && (y.len() != 0) {
-        for index in 0..x.len() - 1 {
+    // Occasionally we see off by one errors in the data.
+    // If true, Chop the last one.
+    let mut data_range = 0..x.len() - 1;
+    if x.len() > y.len() {
+        data_range = 0..y.len() - 1;
+    }
+    if (x.len() != 0) && (y.len() != 0) {
+        for index in data_range.clone() {
             match x_field_name {
                 "distance" => {
                     x_user.push(cvt_distance(x[index] as f32));
@@ -314,8 +320,8 @@ fn get_xy(data: &Vec<FitDataRecord>, x_field_name: &str, y_field_name: &str) -> 
             }
         }
     }
-    if (x.len() == y.len()) && (x.len() != 0) && (y.len() != 0) {
-        for index in 0..y.len() - 1 {
+    if (x.len() != 0) && (y.len() != 0) {
+        for index in data_range.clone() {
             match y_field_name {
                 "distance" => {
                     y_user.push(cvt_distance(y[index] as f32));
@@ -335,8 +341,8 @@ fn get_xy(data: &Vec<FitDataRecord>, x_field_name: &str, y_field_name: &str) -> 
             }
         }
     }
-    if (x_user.len() == y_user.len()) && (x_user.len() != 0) && (y_user.len() != 0) {
-        for index in 0..x.len() - 1 {
+    if (x_user.len() != 0) && (y_user.len() != 0) {
+        for index in data_range.clone() {
             xy_pairs.push((x_user[index], y_user[index]));
         }
     }
