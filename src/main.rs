@@ -78,7 +78,7 @@ fn min_vec(vector: Vec<f32>) -> f32 {
 }
 
 // Find the plot range values.
-fn get_plot_range(
+fn set_plot_range(
     data: &Vec<(f32, f32)>,
     zoom_x: f32,
     zoom_y: f32,
@@ -405,7 +405,7 @@ fn build_da(data: &Vec<FitDataRecord>) -> DrawingArea {
                 if plotvals.len() == 0 {
                     continue;
                 }
-                plot_range = get_plot_range(&plotvals.clone(), zoom_x, zoom_y);
+                plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
                 y_formatter = Box::new(num_formatter);
                 caption = "Elevation";
                 ylabel = "Elevation(feet)";
@@ -417,7 +417,7 @@ fn build_da(data: &Vec<FitDataRecord>) -> DrawingArea {
                 if plotvals.len() == 0 {
                     continue;
                 }
-                plot_range = get_plot_range(&plotvals.clone(), zoom_x, zoom_y);
+                plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
                 y_formatter = Box::new(num_formatter);
                 caption = "Heart rate";
                 ylabel = "Heart rate(bpm)";
@@ -429,7 +429,7 @@ fn build_da(data: &Vec<FitDataRecord>) -> DrawingArea {
                 if plotvals.len() == 0 {
                     continue;
                 }
-                plot_range = get_plot_range(&plotvals.clone(), zoom_x, zoom_y);
+                plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
                 y_formatter = Box::new(num_formatter);
                 caption = "Cadence";
                 ylabel = "Cadence";
@@ -441,7 +441,7 @@ fn build_da(data: &Vec<FitDataRecord>) -> DrawingArea {
                 if plotvals.len() == 0 {
                     continue;
                 }
-                plot_range = get_plot_range(&plotvals.clone(), zoom_x, zoom_y);
+                plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
                 y_formatter = Box::new(pace_formatter);
                 caption = "Pace";
                 ylabel = "Pace(min/mile)";
@@ -453,7 +453,7 @@ fn build_da(data: &Vec<FitDataRecord>) -> DrawingArea {
                 if plotvals.len() == 0 {
                     continue;
                 }
-                plot_range = get_plot_range(&plotvals.clone(), zoom_x, zoom_y);
+                plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
                 y_formatter = Box::new(num_formatter);
                 caption = "Temperature";
                 ylabel = "Temperature (°F)";
