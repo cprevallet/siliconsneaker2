@@ -13,8 +13,10 @@ use gtk4::cairo::Context;
 use libshumate::{Coordinate, PathLayer, SimpleMap};
 use plotters::style::full_palette::BROWN;
 use plotters::style::full_palette::CYAN;
+use std::cell::RefCell;
 use std::fs::File;
 use std::io::ErrorKind;
+use std::rc::Rc;
 
 // Only God and I knew what this was doing when I wrote it.
 // Know only God knows.
@@ -484,14 +486,12 @@ fn draw_graphs(
 }
 
 // Build drawing area.
-fn build_da(data: &Vec<FitDataRecord>) -> DrawingArea {
+fn build_da(data: &Vec<FitDataRecord>, x_zoom: f32, y_zoom: f32) -> DrawingArea {
     let drawing_area: DrawingArea = DrawingArea::builder().build();
     // Need to clone to use inside the closure.
     let d = data.clone();
-    let zoom_x = 1.0;
-    let zoom_y = 1.0;
     drawing_area.set_draw_func(move |_drawing_area, cr, width, height| {
-        draw_graphs(&d, zoom_x, zoom_y, cr, width as f64, height as f64);
+        draw_graphs(&d, x_zoom, y_zoom, cr, width as f64, height as f64);
     });
     return drawing_area;
 }
@@ -728,31 +728,26 @@ fn build_gui(app: &Application) {
     // Main horizontal container to hold the two frames side-by-side
     let main_box = gtk4::Box::new(Orientation::Horizontal, 10);
     let inner_box = gtk4::Box::new(Orientation::Vertical, 10);
-    let text_view = TextView::builder().build();
 
-    // All this to set a background color!
-    // Text appears whited out when this is applied.  Let's keep the code around for now.
-    // Define the CSS with a Class ---
-    /*
-    const CSS_DATA: &str = "
-        /* Target the text node of any element with the class 'my-custom-bg' */
-        .my-custom-bg text {
-    background-color: #e0e0e0; /* Light Gray Text */
-    color: #0044e0; /* Dark Green Background */
-        }
-    ";
-    // Load and Apply the CSS Provider ---
-    let provider = gtk4::CssProvider::new();
-    provider.load_from_data(CSS_DATA);
-    // Apply the CSS globally to the default display
-    StyleContext::add_provider_for_display(
-        &Display::default().expect("Could not get display"),
-        &provider,
-        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
-    );
-    text_view.add_css_class("my-custom-bg");
-    */
-    
+    // Shared State: Use Rc<RefCell<f64>> to safely share the zoom value
+    // This allows both the spin button widget handler and the drawing function to read/write the value.
+    let y_zoom = Rc::new(RefCell::new(1.0));
+    let adjustment = Adjustment::builder()
+        // The initial value (current)
+        .value(*y_zoom.borrow())
+        // The minimum value
+        .lower(0.5)
+        // The maximum value
+        .upper(2.0)
+        // Small step increment (for arrow keys/buttons)
+        .step_increment(0.1)
+        // Large step increment (for Page Up/Page Down keys)
+        .page_increment(0.2)
+        // The size of the viewable area (not often used for SpinButton, usually 0.0)
+        .page_size(0.0)
+        .build();
+
+    let text_view = TextView::builder().build();
     text_view.set_monospace(true);
     let text_buffer = text_view.buffer();
     main_box.set_vexpand(true);
@@ -811,7 +806,7 @@ fn build_gui(app: &Application) {
                         if let Ok(data) = fitparser::from_reader(&mut file) {
                             let shumate_map = build_map(&data);
                             frame_left_handle2.set_child(Some(&shumate_map));
-                            let da = build_da(&data);
+                            let da = build_da(&data, 1.0, 1.0);
                             frame_right_handle2.set_child(Some(&da));
                             build_summary(&data, &text_buffer_handle2);
                         }
@@ -828,20 +823,8 @@ fn build_gui(app: &Application) {
         // 3. Show the dialog
         native.show();
     });
-    let adjustment = Adjustment::builder()
-        // The initial value (current)
-        .value(1.0)
-        // The minimum value
-        .lower(0.5)
-        // The maximum value
-        .upper(2.0)
-        // Small step increment (for arrow keys/buttons)
-        .step_increment(0.1)
-        // Large step increment (for Page Up/Page Down keys)
-        .page_increment(0.2)
-        // The size of the viewable area (not often used for SpinButton, usually 0.0)
-        .page_size(0.0)
-        .build();
+
+    // Create a spin button for the y-axis zoom.
     let y_zoom_spin_button = SpinButton::builder()
         // Assign the Adjustment object to the SpinButton
         .adjustment(&adjustment)
@@ -849,6 +832,9 @@ fn build_gui(app: &Application) {
         .digits(2) // Display 2 decimal places
         .wrap(true)
         .build();
+    adjustment.connect_value_changed(|adj| {
+        println!("Adjustment value updated to: {}", adj.value());
+    });
 
     // Inner box contains only the map and text summary
     inner_box.append(&frame_left);
