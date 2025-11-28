@@ -841,7 +841,6 @@ fn build_gui(app: &Application) {
                                     let y_da_handle = da.clone();
                                     frame_left.set_child(Some(&shumate_map));
                                     frame_right.set_child(Some(&da));
-                                    frame_right.set_child(Some(&da));
                                     y_zoom_spin_button.set_adjustment(&yzm);
                                     y_zoom_spin_button.set_width_request(30);
                                     y_zoom_spin_button.adjustment().connect_value_changed(
