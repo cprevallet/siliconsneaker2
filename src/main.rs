@@ -1,6 +1,7 @@
 use fitparser::{FitDataRecord, Value, profile::field_types::MesgNum};
 use gtk4::cairo::Context;
 use gtk4::gdk::Display;
+use gtk4::glib::clone;
 use gtk4::prelude::*;
 use gtk4::{
     Adjustment, Application, ApplicationWindow, Button, DrawingArea, FileChooserAction,
@@ -766,7 +767,6 @@ fn build_gui(app: &Application) {
         .wrap(false)
         .orientation(Orientation::Vertical)
         .build();
-    // Create a spin button for the x-axis zoom.
 
     let text_view = TextView::builder().build();
     text_view.set_monospace(true);
@@ -779,84 +779,95 @@ fn build_gui(app: &Application) {
     let frame_right = Frame::builder().build();
     let btn = Button::with_label("Select a file...");
 
-    let frame_left_handle = frame_left.clone();
-    let frame_right_handle = frame_right.clone();
-    let window_clone = win.clone();
-    let text_buffer_handle = text_buffer.clone();
-    let y_axis_spin_button_handle = y_zoom_spin_button.clone();
+    btn.connect_clicked(clone!(
+        #[strong]
+        win,
+        #[strong]
+        frame_left,
+        #[strong]
+        frame_right,
+        #[strong]
+        text_buffer,
+        #[strong]
+        y_zoom_spin_button,
+        move |_| {
+            // 1. Create the Native Dialog
+            // Notice the arguments: Title, Parent Window, Action, Accept Label, Cancel Label
+            let native = FileChooserNative::new(
+                Some("Open File Native"),
+                Some(&win),
+                FileChooserAction::Open,
+                Some("Open"),   // Custom label for the "OK" button
+                Some("Cancel"), // Custom label for the "Cancel" button
+            );
 
-    btn.connect_clicked(move |_| {
-        // 1. Create the Native Dialog
-        // Notice the arguments: Title, Parent Window, Action, Accept Label, Cancel Label
-        let native = FileChooserNative::new(
-            Some("Open File Native"),
-            Some(&window_clone),
-            FileChooserAction::Open,
-            Some("Open"),   // Custom label for the "OK" button
-            Some("Cancel"), // Custom label for the "Cancel" button
-        );
-
-        // We need another clone of the label for the dialog's internal closure
-        let frame_left_handle2 = frame_left_handle.clone();
-        let frame_right_handle2 = frame_right_handle.clone();
-        let text_buffer_handle2 = text_buffer_handle.clone();
-        let y_axis_spin_button_handle2 = y_axis_spin_button_handle.clone();
-
-        // 2. Connect to the response signal
-        native.connect_response(move |dialog, response| {
-            if response == ResponseType::Accept {
-                // Extract the file path
-                if let Some(file) = dialog.file() {
-                    if let Some(path) = file.path() {
-                        let path_str = path.to_string_lossy();
-                        // Get values from fit file.
-                        let file_result = File::open(&*path_str);
-                        let mut file = match file_result {
-                            Ok(file) => file,
-                            Err(error) => match error.kind() {
-                                // Handle specifically "Not Found"
-                                ErrorKind::NotFound => {
-                                    panic!("File not found.");
+            // 2. Connect to the response signal
+            native.connect_response(clone!(
+                #[strong]
+                frame_left,
+                #[strong]
+                frame_right,
+                #[strong]
+                text_buffer,
+                #[strong]
+                y_zoom_spin_button,
+                move |dialog, response| {
+                    if response == ResponseType::Accept {
+                        // Extract the file path
+                        if let Some(file) = dialog.file() {
+                            if let Some(path) = file.path() {
+                                let path_str = path.to_string_lossy();
+                                // Get values from fit file.
+                                let file_result = File::open(&*path_str);
+                                let mut file = match file_result {
+                                    Ok(file) => file,
+                                    Err(error) => match error.kind() {
+                                        // Handle specifically "Not Found"
+                                        ErrorKind::NotFound => {
+                                            panic!("File not found.");
+                                        }
+                                        _ => {
+                                            panic!("Hmmm...unknown error. Check file permissions?");
+                                        }
+                                    },
+                                };
+                                // Read the fit file and create the map and graph drawing area.
+                                if let Ok(data) = fitparser::from_reader(&mut file) {
+                                    let shumate_map = build_map(&data);
+                                    let (da, _, yzm) = build_da(&data);
+                                    let (width, _height) = get_geometry();
+                                    let da_height = 0.7 * height as f32;
+                                    let da_width = 0.45 * width as f32;
+                                    da.set_content_height(da_height as i32);
+                                    da.set_content_width(da_width as i32);
+                                    let y_da_handle = da.clone();
+                                    frame_left.set_child(Some(&shumate_map));
+                                    frame_right.set_child(Some(&da));
+                                    frame_right.set_child(Some(&da));
+                                    y_zoom_spin_button.set_adjustment(&yzm);
+                                    y_zoom_spin_button.set_width_request(30);
+                                    y_zoom_spin_button.adjustment().connect_value_changed(
+                                        move |_| {
+                                            y_da_handle.queue_draw();
+                                        },
+                                    );
+                                    build_summary(&data, &text_buffer);
                                 }
-                                _ => {
-                                    panic!("Hmmm...unknown error. Check file permissions?");
-                                }
-                            },
-                        };
-                        // Read the fit file and create the map and graph drawing area.
-                        if let Ok(data) = fitparser::from_reader(&mut file) {
-                            let shumate_map = build_map(&data);
-                            let (da, _, yzm) = build_da(&data);
-                            let (width, _height) = get_geometry();
-                            let da_height = 0.7 * height as f32;
-                            let da_width = 0.45 * width as f32;
-                            da.set_content_height(da_height as i32);
-                            da.set_content_width(da_width as i32);
-                            let y_da_handle = da.clone();
-                            frame_left_handle2.set_child(Some(&shumate_map));
-                            frame_right_handle2.set_child(Some(&da));
-                            y_axis_spin_button_handle2.set_adjustment(&yzm);
-                            y_axis_spin_button_handle2.set_width_request(30);
-                            y_axis_spin_button_handle2
-                                .adjustment()
-                                .connect_value_changed(move |_| {
-                                    y_da_handle.queue_draw();
-                                });
-                            build_summary(&data, &text_buffer_handle2);
+                            }
                         }
+                    } else {
+                        println!("User cancelled");
                     }
+                    // unlike FileChooserDialog, 'native' creates a transient reference.
+                    // It's good practice to drop references, but GTK handles the cleanup
+                    // once it goes out of scope or the window closes.
                 }
-            } else {
-                println!("User cancelled");
-            }
-            // unlike FileChooserDialog, 'native' creates a transient reference.
-            // It's good practice to drop references, but GTK handles the cleanup
-            // once it goes out of scope or the window closes.
-        });
+            ));
 
-        // 3. Show the dialog
-        native.show();
-    });
+            // 3. Show the dialog
+            native.show();
+        }
+    )); //button-connect-clicked
 
     // Inner box contains only the map and text summary
     right_frame_box.append(&frame_right);
@@ -881,4 +892,4 @@ fn build_gui(app: &Application) {
     outer_box.append(&main_box);
     win.set_child(Some(&outer_box));
     win.present();
-}
+} // build_gui
