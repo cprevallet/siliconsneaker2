@@ -532,21 +532,22 @@ fn build_da(data: &Vec<FitDataRecord>) -> (DrawingArea, Adjustment, Adjustment) 
 // Adds a PathLayer with a path of given coordinates to the map.
 fn add_marker_layer_to_map(map: &SimpleMap, marker_points: Vec<(f32, f32)>) {
     // Define the RGBA color using the builder pattern for gtk4::gdk::RGBA
-    let blue = gdk::RGBA::parse("blue").expect("Failed to parse color");
+    //    let blue = gdk::RGBA::parse("blue").expect("Failed to parse color");
     let viewport = map.viewport().expect("No viewport.");
     let marker_layer = libshumate::MarkerLayer::new(&viewport);
-    let marker_content = gtk4::Label::new(Some("📍 Built Marker!"));
-    marker_content.set_halign(gtk4::Align::Center);
+
     for (lat, lon) in marker_points {
         let lat_deg = semi_to_degrees(lat);
         let lon_deg = semi_to_degrees(lon);
-        // let marker_builder = Marker::builder();
-        let widget = gtk4::Label::new(Some("📍 Marker Here!"));
+        let marker_content = gtk4::Label::new(Some("📍"));
+        marker_content.set_halign(gtk4::Align::Center);
+        marker_content.set_valign(gtk4::Align::Center);
+        let widget = &marker_content;
         let marker = Marker::builder()
             //            .label()
             .latitude(lat_deg)
             .longitude(lon_deg)
-            .child(&widget)
+            .child(&widget.clone())
             // Set the visual content widget
             .build();
         marker_layer.add_marker(&marker);
