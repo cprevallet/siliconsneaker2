@@ -365,6 +365,7 @@ fn get_xy(data: &Vec<FitDataRecord>, x_field_name: &str, y_field_name: &str) -> 
     return xy_pairs;
 }
 
+// Use plotters.rs to draw a graph on the drawing area.
 fn draw_graphs(
     d: &Vec<FitDataRecord>,
     xzm: &Adjustment,
@@ -483,6 +484,24 @@ fn draw_graphs(
         // // And we can draw something in the drawing area
         // We need to clone plotvals each time we make a call to LineSeries and PointSeries
         let _ = chart.draw_series(LineSeries::new(plotvals.clone(), color));
+        let current = 50;
+        let hair_x = plotvals[current].0;
+        let hair_y_min = plot_range.clone().0.start;
+        let hair_y_max = plot_range.clone().1.end;
+        let mut hairlinevals: Vec<(f32, f32)> = Vec::new();
+        hairlinevals.push((hair_x, hair_y_min));
+        hairlinevals.push((hair_x, hair_y_max));
+        // let hairlinevals = vec![[(hair_x, hair_y_min)], [(hair_x, hair_y_max)]];
+        let _ = chart.draw_series(DashedLineSeries::new(
+            hairlinevals,
+            1,
+            4,
+            ShapeStyle {
+                color: BLACK.mix(1.0),
+                filled: false,
+                stroke_width: 1,
+            },
+        ));
     }
     let _ = root.present();
     // --- Custom Drawing Logic Ends Here ---
