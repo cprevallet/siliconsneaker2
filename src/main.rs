@@ -11,7 +11,7 @@ use gtk4::{
     TextView, gdk,
 };
 use libshumate::prelude::*;
-use libshumate::{Coordinate, Marker, PathLayer, SimpleMap};
+use libshumate::{Coordinate, Marker, MarkerLayer, PathLayer, SimpleMap};
 use plotters::prelude::*;
 use plotters::style::full_palette::BROWN;
 use plotters::style::full_palette::CYAN;
@@ -498,7 +498,6 @@ fn draw_graphs(
                 &y_formatter(&hair_y)
             )
             .to_string();
-            println!("{}", mylabel);
             let hair_y_min = plot_range.clone().0.start;
             let hair_y_max = plot_range.clone().1.end;
             let mut hairlinevals: Vec<(f32, f32)> = Vec::new();
@@ -599,30 +598,24 @@ fn build_da(data: &Vec<FitDataRecord>) -> (DrawingArea, Adjustment, Adjustment, 
 }
 
 // Adds a PathLayer with a path of given coordinates to the map.
-fn add_marker_layer_to_map(map: &SimpleMap, marker_points: Vec<(f32, f32)>, symbol: &str) {
+// fn add_marker_layer_to_map(map: &SimpleMap, marker_points: Vec<(f32, f32)>, symbol: &str) {
+//     // Define the RGBA color using the builder pattern for gtk4::gdk::RGBA
+//     //    let blue = gdk::RGBA::parse("blue").expect("Failed to parse color");
+//     let viewport = map.viewport().expect("No viewport.");
+//     let marker_layer = libshumate::MarkerLayer::new(&viewport);
+
+//     // Add the layer to the map
+//     map.add_overlay_layer(&marker_layer);
+// }
+
+fn add_marker_layer_to_map(map: &SimpleMap) -> MarkerLayer {
     // Define the RGBA color using the builder pattern for gtk4::gdk::RGBA
     //    let blue = gdk::RGBA::parse("blue").expect("Failed to parse color");
     let viewport = map.viewport().expect("No viewport.");
     let marker_layer = libshumate::MarkerLayer::new(&viewport);
-
-    for (lat, lon) in marker_points {
-        let lat_deg = semi_to_degrees(lat);
-        let lon_deg = semi_to_degrees(lon);
-        let marker_content = gtk4::Label::new(Some(symbol));
-        marker_content.set_halign(gtk4::Align::Center);
-        marker_content.set_valign(gtk4::Align::Baseline);
-        let widget = &marker_content;
-        let marker = Marker::builder()
-            //            .label()
-            .latitude(lat_deg)
-            .longitude(lon_deg)
-            .child(&widget.clone())
-            // Set the visual content widget
-            .build();
-        marker_layer.add_marker(&marker);
-    }
     // Add the layer to the map
     map.add_overlay_layer(&marker_layer);
+    return marker_layer.clone();
 }
 
 //Adds a PathLayer with a path of given coordinates to the map.
@@ -701,7 +694,7 @@ fn get_symbol(data: &Vec<FitDataRecord>) -> &str {
     return symbol;
 }
 // Build the map.
-fn build_map(data: &Vec<FitDataRecord>) -> SimpleMap {
+fn build_map(data: &Vec<FitDataRecord>) -> (SimpleMap, MarkerLayer) {
     let map = SimpleMap::new();
     let source = libshumate::MapSourceRegistry::with_defaults()
         .by_id("osm-mapnik")
@@ -711,7 +704,7 @@ fn build_map(data: &Vec<FitDataRecord>) -> SimpleMap {
     let run_path = get_xy(&data, "position_lat", "position_long");
     // Call the function to add the path layer
     add_path_layer_to_map(&map, run_path.clone());
-    add_marker_layer_to_map(&map, run_path.clone(), get_symbol(&data));
+    let mut marker_layer = add_marker_layer_to_map(&map);
     let viewport = map.viewport().expect("Couldn't get viewport.");
     // You may want to set an initial center and zoom level.
     let nec_lat = get_sess_record_field(data.clone(), "nec_lat");
@@ -729,7 +722,7 @@ fn build_map(data: &Vec<FitDataRecord>) -> SimpleMap {
         viewport.set_location(29.7601, -95.3701); // e.g. Houston, USA
     }
     viewport.set_zoom_level(14.0);
-    return map;
+    return (map, marker_layer);
 }
 
 // Build the map.
@@ -990,7 +983,7 @@ fn build_gui(app: &Application) {
                                 };
                                 // Read the fit file and create the map and graph drawing area.
                                 if let Ok(data) = fitparser::from_reader(&mut file) {
-                                    let shumate_map = build_map(&data);
+                                    let (shumate_map, shumate_marker_layer) = build_map(&data);
                                     let (da, _, yzm, curr_pos) = build_da(&data);
                                     let (width, _height) = get_geometry();
                                     let da_height = 0.7 * height as f32;
@@ -1005,18 +998,45 @@ fn build_gui(app: &Application) {
                                     y_zoom_scale.adjustment().connect_value_changed(clone!(
                                         #[strong]
                                         da,
-                                        move |_| {
-                                            da.queue_draw();
-                                        },
+                                        move |_| da.queue_draw()
                                     ));
-                                    //                                    current_pos.set_upper(max_idx);
                                     curr_pos_scale.set_adjustment(&curr_pos);
                                     // Redraw the drawing area when the zoom changes.
                                     curr_pos_scale.adjustment().connect_value_changed(clone!(
                                         #[strong]
                                         da,
+                                        #[strong]
+                                        data,
+                                        #[strong]
+                                        shumate_map,
+                                        #[strong]
+                                        shumate_marker_layer,
                                         move |_| {
+                                            // Update graphs.
                                             da.queue_draw();
+                                            // Update map.
+                                            let run_path =
+                                                get_xy(&data, "position_lat", "position_long");
+
+                                            for (lat, lon) in run_path {
+                                                let lat_deg = semi_to_degrees(lat);
+                                                let lon_deg = semi_to_degrees(lon);
+                                                let marker_content =
+                                                    gtk4::Label::new(Some(get_symbol(&data)));
+                                                marker_content.set_halign(gtk4::Align::Center);
+                                                marker_content.set_valign(gtk4::Align::Baseline);
+                                                let widget = &marker_content;
+                                                let marker = Marker::builder()
+                                                    //            .label()
+                                                    .latitude(lat_deg)
+                                                    .longitude(lon_deg)
+                                                    .child(&widget.clone())
+                                                    // Set the visual content widget
+                                                    .build();
+                                                shumate_marker_layer.add_marker(&marker);
+                                            }
+
+                                            shumate_map.queue_draw();
                                         },
                                     ));
                                     build_summary(&data, &text_buffer);
