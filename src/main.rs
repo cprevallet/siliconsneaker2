@@ -704,7 +704,7 @@ fn build_map(data: &Vec<FitDataRecord>) -> (SimpleMap, MarkerLayer) {
     let run_path = get_xy(&data, "position_lat", "position_long");
     // Call the function to add the path layer
     add_path_layer_to_map(&map, run_path.clone());
-    let mut marker_layer = add_marker_layer_to_map(&map);
+    let marker_layer = add_marker_layer_to_map(&map);
     let viewport = map.viewport().expect("Couldn't get viewport.");
     // You may want to set an initial center and zoom level.
     let nec_lat = get_sess_record_field(data.clone(), "nec_lat");
@@ -1011,30 +1011,38 @@ fn build_gui(app: &Application) {
                                         shumate_map,
                                         #[strong]
                                         shumate_marker_layer,
+                                        #[strong]
+                                        curr_pos,
                                         move |_| {
                                             // Update graphs.
                                             da.queue_draw();
                                             // Update map.
+                                            shumate_marker_layer.remove_all();
                                             let run_path =
                                                 get_xy(&data, "position_lat", "position_long");
+                                            let idx = (curr_pos.value()
+                                                * (run_path.len() as f64 - 1.0))
+                                                .trunc()
+                                                as usize;
+                                            let curr_lat = run_path.clone()[idx].0;
+                                            let curr_lon = run_path.clone()[idx].1;
+                                            let lat_deg = semi_to_degrees(curr_lat);
+                                            let lon_deg = semi_to_degrees(curr_lon);
+                                            let marker_content =
+                                                gtk4::Label::new(Some(get_symbol(&data)));
+                                            marker_content.set_halign(gtk4::Align::Center);
+                                            marker_content.set_valign(gtk4::Align::Baseline);
+                                            let widget = &marker_content;
+                                            let marker = Marker::builder()
+                                                //            .label()
+                                                .latitude(lat_deg)
+                                                .longitude(lon_deg)
+                                                .child(&widget.clone())
+                                                // Set the visual content widget
+                                                .build();
+                                            shumate_marker_layer.add_marker(&marker);
 
-                                            for (lat, lon) in run_path {
-                                                let lat_deg = semi_to_degrees(lat);
-                                                let lon_deg = semi_to_degrees(lon);
-                                                let marker_content =
-                                                    gtk4::Label::new(Some(get_symbol(&data)));
-                                                marker_content.set_halign(gtk4::Align::Center);
-                                                marker_content.set_valign(gtk4::Align::Baseline);
-                                                let widget = &marker_content;
-                                                let marker = Marker::builder()
-                                                    //            .label()
-                                                    .latitude(lat_deg)
-                                                    .longitude(lon_deg)
-                                                    .child(&widget.clone())
-                                                    // Set the visual content widget
-                                                    .build();
-                                                shumate_marker_layer.add_marker(&marker);
-                                            }
+                                            // for (lat, lon) in run_path {}
 
                                             shumate_map.queue_draw();
                                         },
