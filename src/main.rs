@@ -491,7 +491,7 @@ fn draw_graphs(
             let hair_x = plotvals[idx].0;
             let hair_y = plotvals[idx].1;
             let mylabel = format!(
-                "{:?}: {:5.2}\n {:?}: {:?}",
+                "{:<?}: {:<5.2} {:<?}: {:<?}",
                 xlabel,
                 hair_x,
                 ylabel,
@@ -520,9 +520,9 @@ fn draw_graphs(
 
             chart
                 .configure_series_labels()
-                .position(SeriesLabelPosition::UpperRight)
-                .margin(20)
-                .legend_area_size(5)
+                .position(SeriesLabelPosition::UpperMiddle)
+                .margin(5)
+                // .legend_area_size(10)
                 .border_style(BLUE)
                 .background_style(BLUE.mix(0.1))
                 .label_font(("Calibri", 12))
