@@ -517,16 +517,13 @@ fn draw_graphs(
                 ))
                 .unwrap()
                 .label(mylabel);
-            // .legend(|(x, y)| Rectangle::new([(x - 15, y + 1), (x, y)], BLACK));
 
             chart
                 .configure_series_labels()
                 .position(SeriesLabelPosition::UpperLeft)
                 .margin(5)
                 .legend_area_size(0)
-                // .border_style(BLUE)
-                //.background_style(BLUE.mix(0.15))
-                .label_font(("Calibri", 11))
+                .label_font(("Calibri", 10))
                 .draw()
                 .unwrap();
         }
