@@ -910,27 +910,19 @@ fn build_gui(app: &Application) {
         .title("SiliconSneaker II")
         .build();
 
-    let main_box = gtk4::Box::new(Orientation::Horizontal, 10);
+    // Main horizontal container to hold the two frames side-by-side,
+    // outer box wraps main_box.
     let outer_box = gtk4::Box::new(Orientation::Vertical, 10);
-    // Main horizontal container to hold the two frames side-by-side
-
+    let main_box = gtk4::Box::new(Orientation::Horizontal, 10);
     main_box.set_vexpand(true);
+    main_box.set_hexpand(true);
     let btn = Button::with_label("Select a file...");
-    let y_zoom_scale = Scale::with_range(Orientation::Vertical, 0.5, 4.0, 0.1);
-    y_zoom_scale.set_draw_value(false); // Ensure the value is not displayed on the scale itself
-    let curr_pos_scale = Scale::with_range(Orientation::Vertical, 0.0, 1.0, 0.05);
-    curr_pos_scale.set_draw_value(false); // Ensure the value is not displayed on the scale itself
-    //    scale.set_digits(1);
 
     btn.connect_clicked(clone!(
         #[strong]
         win,
         #[strong]
         main_box,
-        #[strong]
-        y_zoom_scale,
-        #[strong]
-        curr_pos_scale,
         move |_| {
             // 1. Create the Native Dialog
             // Notice the arguments: Title, Parent Window, Action, Accept Label, Cancel Label
@@ -946,10 +938,6 @@ fn build_gui(app: &Application) {
             native.connect_response(clone!(
                 #[strong]
                 main_box,
-                #[strong]
-                y_zoom_scale,
-                #[strong]
-                curr_pos_scale,
                 move |dialog, response| {
                     if response == ResponseType::Accept {
                         // Extract the file path
@@ -970,28 +958,43 @@ fn build_gui(app: &Application) {
                                         }
                                     },
                                 };
-                                // Read the fit file.
+                                // This is the main body of the program.  After reading the fit file,
+                                // see the comments for actions taken.
                                 if let Ok(data) = fitparser::from_reader(&mut file) {
-                                    // Instantiate the UI widget objects.
-                                    main_box.set_hexpand(true);
-                                    let text_view = TextView::builder().build();
+                                    // 1. Clear out any previous widgets upon opening a second file.
+                                    while let Some(child) = main_box.last_child() {
+                                        main_box.remove(&child)
+                                    }
+
+                                    // 2. Instantiate the main UI widgets.
+                                    let text_view = TextView::builder().monospace(true).build();
                                     let frame_left = Frame::builder().build();
                                     let frame_right = Frame::builder().build();
                                     let left_frame_box = gtk4::Box::new(Orientation::Vertical, 10);
                                     let right_frame_box =
                                         gtk4::Box::new(Orientation::Horizontal, 10);
-                                    text_view.set_monospace(true);
                                     let scrolled_window =
                                         ScrolledWindow::builder().child(&text_view).build();
+                                    let da_window = ScrolledWindow::builder().build();
+                                    let y_zoom_scale =
+                                        Scale::with_range(Orientation::Vertical, 0.5, 4.0, 0.1);
+                                    let curr_pos_scale =
+                                        Scale::with_range(Orientation::Vertical, 0.0, 1.0, 0.05);
 
-                                    // Construct embedded display objects based on parsed data.
+                                    // 3. Construct embedded widgets based on parsed fit data.
                                     let (shumate_map, shumate_marker_layer) = build_map(&data);
                                     let (da, _, yzm, curr_pos) = build_da(&data);
                                     let text_buffer = text_view.buffer();
                                     build_summary(&data, &text_buffer);
 
-                                    // Layout the widgets and connect embedded objects.
-                                    scrolled_window.set_size_request(500, 300);
+                                    // 4. Connect embedded widgets to their parents.
+                                    da_window.set_child(Some(&da));
+                                    frame_right.set_child(Some(&da_window));
+                                    frame_left.set_child(Some(&shumate_map));
+                                    y_zoom_scale.set_adjustment(&yzm);
+                                    curr_pos_scale.set_adjustment(&curr_pos);
+
+                                    // 5. Configure the widget layout.
                                     left_frame_box.append(&frame_left);
                                     left_frame_box.set_homogeneous(true);
                                     left_frame_box.append(&scrolled_window);
@@ -1001,37 +1004,35 @@ fn build_gui(app: &Application) {
                                     // Main box contains all of the above plus the graphs.
                                     main_box.append(&left_frame_box);
                                     main_box.append(&right_frame_box);
-                                    //    main_box.set_homogeneous(true); // Ensures both frames take exactly half the window width
+
+                                    // 6. Size the widgets.
+                                    scrolled_window.set_size_request(500, 300);
                                     let (width, height) = get_geometry();
                                     let w_height = (height - 300) as f32;
                                     let w_width = (width - 600) as f32;
-                                    let da_window = ScrolledWindow::builder().child(&da).build();
-                                    frame_right.set_child(Some(&da_window));
-                                    frame_left.set_child(Some(&shumate_map));
                                     da_window.set_size_request(
                                         w_width.trunc() as i32,
                                         w_height.trunc() as i32,
                                     );
-                                    y_zoom_scale.set_adjustment(&yzm);
-
-                                    // da.set_content_height(
-                                    //     (0.90 * da_window.height() as f64) as i32,
-                                    // );
-                                    // da.set_content_width((0.90 * da_window.width() as f64) as i32);
-
                                     da.set_size_request(
                                         (0.90 * da_window.height() as f64) as i32,
                                         (0.90 * da_window.width() as f64) as i32,
                                     );
                                     y_zoom_scale.set_width_request(30);
+                                    curr_pos_scale.set_width_request(30);
+
+                                    // 7. Configure widgets not handled during instantiation.
+                                    y_zoom_scale.set_draw_value(false); // Ensure the value is not displayed on the scale itself
+                                    curr_pos_scale.set_draw_value(false); // Ensure the value is not displayed on the scale itself
+
+                                    // 8. Establish call-back routines for widget event handling.
                                     // Redraw the drawing area when the zoom changes.
                                     y_zoom_scale.adjustment().connect_value_changed(clone!(
                                         #[strong]
                                         da,
                                         move |_| da.queue_draw()
                                     ));
-                                    curr_pos_scale.set_adjustment(&curr_pos);
-                                    // Redraw the drawing area when the zoom changes.
+                                    // Redraw the drawing area and map when the current postion changes.
                                     curr_pos_scale.adjustment().connect_value_changed(clone!(
                                         #[strong]
                                         da,
