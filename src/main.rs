@@ -907,7 +907,7 @@ fn build_gui(app: &Application) {
         .application(app)
         .default_width(app_width.trunc() as i32)
         .default_height(app_height.trunc() as i32)
-        .title("Test")
+        .title("SiliconSneaker II")
         .build();
 
     let outer_box = gtk4::Box::new(Orientation::Vertical, 10);
@@ -992,7 +992,7 @@ fn build_gui(app: &Application) {
                                     frame_left.set_child(Some(&shumate_map));
 
                                     let (width, height) = get_geometry();
-                                    println!("{}{}", width, height);
+                                    //println!("{}{}", width, height);
                                     let w_height = (height - 300) as f32;
                                     let w_width = (width - 600) as f32;
                                     let da_window = ScrolledWindow::builder()
