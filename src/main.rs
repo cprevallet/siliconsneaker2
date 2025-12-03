@@ -864,43 +864,26 @@ fn build_summary(data: &Vec<FitDataRecord>, text_buffer: &TextBuffer) {
 }
 
 // Find out how many pixels we have to work with.
-fn get_geometry() -> (i32, i32) {
-    // 1. Get the default display (connection to the window server)
-    if let Some(display) = Display::default() {
-        // 2. Get the list of monitors (returns a ListModel)
-        let monitors = display.monitors();
-        // We'll choose the smallest width, height of the two.
-        let num_monitors = monitors.n_items();
-        if let Some(monitor_obj) = monitors.item(0) {
-            // Downcast the generic object to a GdkMonitor
-            if let Ok(monitor) = monitor_obj.downcast::<gdk::Monitor>() {
-                // 4. Get geometry (x, y, width, height)
-                let geometry0 = monitor.geometry();
-                if num_monitors == 1 {
-                    return (geometry0.width(), geometry0.height());
-                }
-                let g0 = geometry0.clone();
-                // 5. If there's a second monitor use the smallest resolution of the two.
-                // Is this really the best method?
-                if num_monitors == 2 {
-                    if let Some(monitor_obj) = monitors.item(1) {
-                        // Downcast the generic object to a GdkMonitor
-                        if let Ok(monitor) = monitor_obj.downcast::<gdk::Monitor>() {
-                            // 4. Get geometry (x, y, width, height)
-                            let geometry1 = monitor.geometry();
-                            return (
-                                std::cmp::min(g0.width(), geometry1.width()),
-                                std::cmp::min(g0.height(), geometry1.width()),
-                            );
-                        }
-                    }
-                }
-            }
+fn get_geometry(window: &ApplicationWindow) -> (i32, i32) {
+    // Get the GdkSurface (only exists if window is realized)
+    if let Some(surface) = window.surface() {
+        let display = gtk4::prelude::WidgetExt::display(window);
+        // get the monitor for this window
+        // Note: This returns the monitor containing the largest area of the window
+        if let Some(monitor) = display.monitor_at_surface(&surface) {
+            // Get geometry and scale factor.
+            let geometry = monitor.geometry();
+            let scale = monitor.scale_factor(); //scale is one for non-hi res 
+            let logical_w = geometry.width();
+            let logical_h = geometry.height();
+            let phys_w = logical_w * scale;
+            let phys_h = logical_h * scale;
+            return (phys_w, phys_h);
         }
     }
+    // Least common denominator.
     return (1024, 768);
 }
-// Create the GUI.
 fn build_gui(app: &Application) {
     let win = ApplicationWindow::builder()
         .application(app)
@@ -1005,17 +988,16 @@ fn build_gui(app: &Application) {
                                     main_box.append(&right_frame_box);
 
                                     // 6. Size the widgets.
-                                    let (width, height) = get_geometry();
+                                    let (width, height) = get_geometry(&win);
                                     let win_width = (FRACT_OF_SCREEN * width as f32).trunc() as i32;
                                     let win_height =
                                         (FRACT_OF_SCREEN * height as f32).trunc() as i32;
                                     win.set_default_width(win_width);
                                     win.set_default_height(win_height);
                                     scrolled_window.set_size_request(500, 300);
-                                    //                                    let (width, height) = get_geometry();
-                                    let w_height = win_height - 300;
-                                    let w_width = win_width - 600;
-                                    da_window.set_size_request(w_width, w_height);
+                                    let da_window_height = win_height - 300;
+                                    let da_window_width = win_width - 600;
+                                    da_window.set_size_request(da_window_width, da_window_height);
                                     da.set_size_request(
                                         (0.90 * da_window.height() as f32) as i32,
                                         (0.90 * da_window.width() as f32) as i32,
