@@ -20,6 +20,12 @@ use std::io::ErrorKind;
 // Now only God knows.
 
 static FRACT_OF_SCREEN: f32 = 0.85;
+// Unit of measure system.
+enum Units {
+    Metric,
+    US,
+    None,
+}
 
 // Program entry point.
 fn main() {
@@ -28,14 +34,23 @@ fn main() {
     app.run();
 }
 
-fn get_units(units: &DropDown) -> String {
-    let model = units.model().expect("No units model.");
-    if let Some(item_obj) = model.item(units.selected()) {
+fn get_unit_system(units_widget: &DropDown) -> Units {
+    if units_widget.model() == None {
+        return Units::None;
+    }
+    let model = units_widget.model().expect("No units_widget model.");
+    if let Some(item_obj) = model.item(units_widget.selected()) {
         if let Ok(string_obj) = item_obj.downcast::<StringObject>() {
-            return String::from(string_obj.string());
+            let unit_string = String::from(string_obj.string());
+            if unit_string == "Metric" {
+                return Units::Metric;
+            }
+            if unit_string == "US" {
+                return Units::US;
+            }
         }
     }
-    return String::from("");
+    return Units::None;
 }
 
 // Calculate the vector average.
@@ -265,7 +280,7 @@ fn get_time_in_zone_field(data: &Vec<FitDataRecord>) -> (Option<Vec<f64>>, Optio
 }
 
 // Convert speed (m/s) to pace(min/mile)
-fn cvt_pace(speed: f32) -> f32 {
+fn cvt_pace(speed: f32, units: &Units) -> f32 {
     if speed < 1.00 {
         return 26.8224; //avoid divide by zero
     } else {
@@ -274,17 +289,17 @@ fn cvt_pace(speed: f32) -> f32 {
 }
 
 // Convert distance meters to miles.
-fn cvt_distance(distance: f32) -> f32 {
+fn cvt_distance(distance: f32, units: &Units) -> f32 {
     return distance * 0.00062137119;
 }
 
 // Convert altitude meters to feet.
-fn cvt_altitude(altitude: f32) -> f32 {
+fn cvt_altitude(altitude: f32, units: &Units) -> f32 {
     return altitude * 3.2808399;
 }
 
 // Convert temperature deg C  to deg F.
-fn cvt_temperature(temperature: f32) -> f32 {
+fn cvt_temperature(temperature: f32, units: &Units) -> f32 {
     return temperature * 1.8 + 32.0;
 }
 
@@ -307,10 +322,17 @@ fn cvt_elapsed_time(time_in_sec: f32) -> (i32, i32, i32) {
 }
 
 // Retrieve converted values to plot from fit file.
-fn get_xy(data: &Vec<FitDataRecord>, x_field_name: &str, y_field_name: &str) -> Vec<(f32, f32)> {
+fn get_xy(
+    data: &Vec<FitDataRecord>,
+    units_widget: &DropDown,
+    x_field_name: &str,
+    y_field_name: &str,
+) -> Vec<(f32, f32)> {
     let mut x_user: Vec<f32> = Vec::new();
     let mut y_user: Vec<f32> = Vec::new();
     let mut xy_pairs: Vec<(f32, f32)> = Vec::new();
+    // Get the enumerated value for the unit system the user selected.
+    let user_unit = get_unit_system(units_widget);
     // Parameter can be distance, heart_rate, enhanced_speed, enhanced_altitude.
     let x: Vec<f64> = get_msg_record_field_as_vec(data.clone(), x_field_name);
     let y: Vec<f64> = get_msg_record_field_as_vec(data.clone(), y_field_name);
@@ -328,16 +350,16 @@ fn get_xy(data: &Vec<FitDataRecord>, x_field_name: &str, y_field_name: &str) -> 
         for index in data_range.clone() {
             match x_field_name {
                 "distance" => {
-                    x_user.push(cvt_distance(x[index] as f32));
+                    x_user.push(cvt_distance(x[index] as f32, &user_unit));
                 }
                 "enhanced_speed" => {
-                    x_user.push(cvt_pace(x[index] as f32));
+                    x_user.push(cvt_pace(x[index] as f32, &user_unit));
                 }
                 "altitude" => {
-                    x_user.push(cvt_altitude(x[index] as f32));
+                    x_user.push(cvt_altitude(x[index] as f32, &user_unit));
                 }
                 "temperature" => {
-                    x_user.push(cvt_temperature(x[index] as f32));
+                    x_user.push(cvt_temperature(x[index] as f32, &user_unit));
                 }
                 _ => {
                     x_user.push(x[index] as f32);
@@ -349,16 +371,16 @@ fn get_xy(data: &Vec<FitDataRecord>, x_field_name: &str, y_field_name: &str) -> 
         for index in data_range.clone() {
             match y_field_name {
                 "distance" => {
-                    y_user.push(cvt_distance(y[index] as f32));
+                    y_user.push(cvt_distance(y[index] as f32, &user_unit));
                 }
                 "enhanced_speed" => {
-                    y_user.push(cvt_pace(y[index] as f32));
+                    y_user.push(cvt_pace(y[index] as f32, &user_unit));
                 }
                 "altitude" => {
-                    y_user.push(cvt_altitude(y[index] as f32));
+                    y_user.push(cvt_altitude(y[index] as f32, &user_unit));
                 }
                 "temperature" => {
-                    y_user.push(cvt_temperature(y[index] as f32));
+                    y_user.push(cvt_temperature(y[index] as f32, &user_unit));
                 }
                 _ => {
                     y_user.push(y[index] as f32);
@@ -377,7 +399,7 @@ fn get_xy(data: &Vec<FitDataRecord>, x_field_name: &str, y_field_name: &str) -> 
 // Use plotters.rs to draw a graph on the drawing area.
 fn draw_graphs(
     d: &Vec<FitDataRecord>,
-    units: &DropDown,
+    units_widget: &DropDown,
     xzm: &Adjustment,
     yzm: &Adjustment,
     curr_adj: &Adjustment,
@@ -412,7 +434,7 @@ fn draw_graphs(
         //let root = root.margin(50, 50, 50, 50);
         // After this point, we should be able to construct a chart context
         if idx == 1 {
-            plotvals = get_xy(&d, "distance", "enhanced_altitude");
+            plotvals = get_xy(&d, &units_widget, "distance", "enhanced_altitude");
             if plotvals.len() == 0 {
                 continue;
             }
@@ -424,7 +446,7 @@ fn draw_graphs(
             color = &RED;
         }
         if idx == 2 {
-            plotvals = get_xy(&d, "distance", "heart_rate");
+            plotvals = get_xy(&d, &units_widget, "distance", "heart_rate");
             if plotvals.len() == 0 {
                 continue;
             }
@@ -436,7 +458,7 @@ fn draw_graphs(
             color = &BLUE;
         }
         if idx == 3 {
-            plotvals = get_xy(&d, "distance", "cadence");
+            plotvals = get_xy(&d, &units_widget, "distance", "cadence");
             if plotvals.len() == 0 {
                 continue;
             }
@@ -448,7 +470,7 @@ fn draw_graphs(
             color = &CYAN;
         }
         if idx == 4 {
-            plotvals = get_xy(&d, "distance", "enhanced_speed");
+            plotvals = get_xy(&d, &units_widget, "distance", "enhanced_speed");
             if plotvals.len() == 0 {
                 continue;
             }
@@ -460,7 +482,7 @@ fn draw_graphs(
             color = &GREEN;
         }
         if idx == 5 {
-            plotvals = get_xy(&d, "distance", "temperature");
+            plotvals = get_xy(&d, &units_widget, "distance", "temperature");
             if plotvals.len() == 0 {
                 continue;
             }
@@ -544,7 +566,7 @@ fn draw_graphs(
 // Build drawing area.
 fn build_da(
     data: &Vec<FitDataRecord>,
-    units: &DropDown,
+    units_widget: &DropDown,
 ) -> (DrawingArea, Adjustment, Adjustment, Adjustment) {
     let drawing_area: DrawingArea = DrawingArea::builder().build();
     // Need to clone to use inside the closure.
@@ -596,7 +618,7 @@ fn build_da(
     let x_zoom = xzm.clone();
     let y_zoom = yzm.clone();
     let pos = curr_pos.clone();
-    let units_clone = units.clone();
+    let units_clone = units_widget.clone();
     drawing_area.set_draw_func(move |_drawing_area, cr, width, height| {
         draw_graphs(
             &d,
@@ -706,7 +728,8 @@ fn build_map(data: &Vec<FitDataRecord>) -> (SimpleMap, MarkerLayer) {
         .expect("Could not retrieve map source.");
     map.set_map_source(Some(&source));
     // Get values from fit file.
-    let run_path = get_xy(&data, "position_lat", "position_long");
+    let units_widget = DropDown::builder().build(); // bogus value - no units required for position
+    let run_path = get_xy(&data, &units_widget, "position_lat", "position_long");
     // Call the function to add the path layer
     add_path_layer_to_map(&map, run_path.clone());
     let marker_layer = add_marker_layer_to_map(&map);
@@ -731,7 +754,9 @@ fn build_map(data: &Vec<FitDataRecord>) -> (SimpleMap, MarkerLayer) {
 }
 
 // Build the map.
-fn build_summary(data: &Vec<FitDataRecord>, units: &DropDown, text_buffer: &TextBuffer) {
+fn build_summary(data: &Vec<FitDataRecord>, units_widget: &DropDown, text_buffer: &TextBuffer) {
+    // Get the enumerated value for the unit system the user selected.
+    let user_unit = get_unit_system(units_widget);
     text_buffer.set_text("File loaded.");
     // Clear out anything in the buffer.
     let mut start = text_buffer.start_iter();
@@ -801,14 +826,14 @@ fn build_summary(data: &Vec<FitDataRecord>, units: &DropDown, text_buffer: &Text
                         }
                         "total_ascent" | "total_descent" => {
                             let val: f64 = fld.value().clone().try_into().unwrap();
-                            let val_cvt = cvt_altitude(val as f32);
+                            let val_cvt = cvt_altitude(val as f32, &user_unit);
                             let value_str =
                                 format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "feet");
                             text_buffer.insert(&mut end, &value_str);
                         }
                         "total_distance" => {
                             let val: f64 = fld.value().clone().try_into().unwrap();
-                            let val_cvt = cvt_distance(val as f32);
+                            let val_cvt = cvt_distance(val as f32, &user_unit);
                             let value_str =
                                 format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "miles");
                             text_buffer.insert(&mut end, &value_str);
@@ -827,14 +852,14 @@ fn build_summary(data: &Vec<FitDataRecord>, units: &DropDown, text_buffer: &Text
                         }
                         "min_temperature" | "max_temperature" | "avg_temperature" => {
                             let val: i64 = fld.value().try_into().expect("conversion failed");
-                            let val_cvt = cvt_temperature(val as f32);
+                            let val_cvt = cvt_temperature(val as f32, &user_unit);
                             let value_str =
                                 format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "°F");
                             text_buffer.insert(&mut end, &value_str);
                         }
                         "enhanced_avg_speed" | "enhanced_max_speed" => {
                             let val: f64 = fld.value().clone().try_into().unwrap();
-                            let val_cvt = cvt_pace(val as f32);
+                            let val_cvt = cvt_pace(val as f32, &user_unit);
                             let value_str =
                                 format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "min/mile");
                             text_buffer.insert(&mut end, &value_str);
@@ -906,7 +931,7 @@ fn parse_and_display_run(
     win: &ApplicationWindow,
     main_box: &gtk4::Box,
     mut file: File,
-    units: &DropDown,
+    units_widget: &DropDown,
 ) {
     if let Ok(data) = fitparser::from_reader(&mut file) {
         // 1. Clear out any previous widgets upon opening a second file.
@@ -930,9 +955,9 @@ fn parse_and_display_run(
 
         // 3. Instantiate embedded widgets based on parsed fit data.
         let (shumate_map, shumate_marker_layer) = build_map(&data);
-        let (da, _, yzm, curr_pos) = build_da(&data, &units);
+        let (da, _, yzm, curr_pos) = build_da(&data, &units_widget);
         let text_buffer = text_view.buffer();
-        build_summary(&data, &units, &text_buffer);
+        build_summary(&data, &units_widget, &text_buffer);
 
         // 4. Connect embedded widgets to their parents.
         da_window.set_child(Some(&da));
@@ -998,7 +1023,8 @@ fn parse_and_display_run(
                 da.queue_draw();
                 // Update map.
                 shumate_marker_layer.remove_all();
-                let run_path = get_xy(&data, "position_lat", "position_long");
+                let units_widget = DropDown::builder().build(); // bogus value - no units required for position
+                let run_path = get_xy(&data, &units_widget, "position_lat", "position_long");
                 let idx = (curr_pos.value() * (run_path.len() as f64 - 1.0)).trunc() as usize;
                 let curr_lat = run_path.clone()[idx].0;
                 let curr_lon = run_path.clone()[idx].1;
@@ -1059,16 +1085,15 @@ fn build_gui(app: &Application) {
         .margin_start(5)
         .margin_end(5)
         .build();
-    // Unit of measure system.
     let uom = StringList::new(&["Metric", "English"]);
-    let units = DropDown::builder().model(&uom).build();
+    let units_widget = DropDown::builder().model(&uom).build();
     btn.connect_clicked(clone!(
         #[strong]
         win,
         #[strong]
         main_box,
         #[strong]
-        units,
+        units_widget,
         move |_| {
             // 1. Create the Native Dialog
             // Notice the arguments: Title, Parent Window, Action, Accept Label, Cancel Label
@@ -1087,7 +1112,7 @@ fn build_gui(app: &Application) {
                 #[strong]
                 main_box,
                 #[strong]
-                units,
+                units_widget,
                 move |dialog, response| {
                     if response == ResponseType::Accept {
                         // Extract the file path
@@ -1108,7 +1133,7 @@ fn build_gui(app: &Application) {
                                         }
                                     },
                                 };
-                                parse_and_display_run(&win, &main_box, file, &units);
+                                parse_and_display_run(&win, &main_box, file, &units_widget);
                             }
                         }
                     } else {
@@ -1126,7 +1151,7 @@ fn build_gui(app: &Application) {
     )); //button-connect-clicked
 
     outer_box.append(&btn);
-    outer_box.append(&units);
+    outer_box.append(&units_widget);
     outer_box.append(&main_box);
     win.set_child(Some(&outer_box));
     win.maximize();
