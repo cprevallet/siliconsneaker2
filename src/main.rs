@@ -1116,125 +1116,123 @@ fn get_geometry(window: &ApplicationWindow) -> (i32, i32) {
 fn parse_and_display_run(
     win: &ApplicationWindow,
     main_box: &gtk4::Box,
-    mut file: File,
+    data: &Vec<FitDataRecord>,
     units_widget: &DropDown,
 ) {
-    if let Ok(data) = fitparser::from_reader(&mut file) {
-        // 1. Clear out any previous widgets upon opening a second file.
-        while let Some(child) = main_box.last_child() {
-            main_box.remove(&child)
-        }
-
-        // 2. Instantiate the main UI widgets.
-        let text_view = TextView::builder().monospace(true).build();
-        let frame_left = Frame::builder().build();
-        let frame_right = Frame::builder().build();
-        let left_frame_box = gtk4::Box::new(Orientation::Vertical, 10);
-        let right_frame_box = gtk4::Box::new(Orientation::Horizontal, 10);
-        let scrolled_window = ScrolledWindow::builder().child(&text_view).build();
-        let da_window = ScrolledWindow::builder()
-            .vexpand(true)
-            .hexpand(true)
-            .build();
-        let y_zoom_scale = Scale::with_range(Orientation::Vertical, 0.5, 4.0, 0.1);
-        let curr_pos_scale = Scale::with_range(Orientation::Vertical, 0.0, 1.0, 0.05);
-
-        // 3. Instantiate embedded widgets based on parsed fit data.
-        let (shumate_map, shumate_marker_layer) = build_map(&data);
-        let (da, _, yzm, curr_pos) = build_da(&data, &units_widget);
-        let text_buffer = text_view.buffer();
-        build_summary(&data, &units_widget, &text_buffer);
-
-        // 4. Connect embedded widgets to their parents.
-        da_window.set_child(Some(&da));
-        frame_right.set_child(Some(&da_window));
-        frame_left.set_child(Some(&shumate_map));
-        y_zoom_scale.set_adjustment(&yzm);
-        curr_pos_scale.set_adjustment(&curr_pos);
-
-        // 5. Configure the widget layout.
-        left_frame_box.append(&frame_left);
-        left_frame_box.set_homogeneous(true);
-        left_frame_box.append(&scrolled_window);
-        right_frame_box.append(&frame_right);
-        right_frame_box.append(&y_zoom_scale);
-        right_frame_box.append(&curr_pos_scale);
-        // Main box contains all of the above plus the graphs.
-        main_box.append(&left_frame_box);
-        main_box.append(&right_frame_box);
-
-        // 6. Size the widgets.
-        let (width, height) = get_geometry(&win);
-        let win_width = (FRACT_OF_SCREEN * width as f32).trunc() as i32;
-        let win_height = (FRACT_OF_SCREEN * height as f32).trunc() as i32;
-        win.set_default_width(win_width);
-        win.set_default_height(win_height);
-        scrolled_window.set_size_request(500, 300);
-        let da_window_height = win_height - 300;
-        let da_window_width = win_width - 600;
-        da_window.set_size_request(da_window_width, da_window_height);
-        da.set_size_request(
-            (0.90 * da_window.height() as f32) as i32,
-            (0.90 * da_window.width() as f32) as i32,
-        );
-        y_zoom_scale.set_width_request(30);
-        curr_pos_scale.set_width_request(30);
-        win.unmaximize();
-
-        // 7. Configure widgets not handled during instantiation.
-        y_zoom_scale.set_draw_value(false); // Ensure the value is not displayed on the scale itself
-        curr_pos_scale.set_draw_value(false); // Ensure the value is not displayed on the scale itself
-
-        // 8. Establish call-back routines for widget event handling.
-        // Redraw the drawing area when the zoom changes.
-        y_zoom_scale.adjustment().connect_value_changed(clone!(
-            #[strong]
-            da,
-            move |_| da.queue_draw()
-        ));
-        // Redraw the drawing area and map when the current postion changes.
-        curr_pos_scale.adjustment().connect_value_changed(clone!(
-            #[strong]
-            da,
-            #[strong]
-            data,
-            #[strong]
-            shumate_map,
-            #[strong]
-            shumate_marker_layer,
-            #[strong]
-            curr_pos,
-            move |_| {
-                // Update graphs.
-                da.queue_draw();
-                // Update map.
-                shumate_marker_layer.remove_all();
-                let units_widget = DropDown::builder().build(); // bogus value - no units required for position
-                let run_path = get_xy(&data, &units_widget, "position_lat", "position_long");
-                let idx = (curr_pos.value() * (run_path.len() as f64 - 1.0)).trunc() as usize;
-                let curr_lat = run_path.clone()[idx].0;
-                let curr_lon = run_path.clone()[idx].1;
-                let lat_deg = semi_to_degrees(curr_lat);
-                let lon_deg = semi_to_degrees(curr_lon);
-                let marker_text = Some(get_symbol(&data));
-                let marker_content = gtk4::Label::new(marker_text);
-                marker_content.set_halign(gtk4::Align::Center);
-                marker_content.set_valign(gtk4::Align::Baseline);
-                // Style the symbol with mark-up language.
-                marker_content.set_markup(Some(get_symbol(&data)).expect("No symbol."));
-                let widget = &marker_content;
-                let marker = Marker::builder()
-                    //            .label()
-                    .latitude(lat_deg)
-                    .longitude(lon_deg)
-                    .child(&widget.clone())
-                    // Set the visual content widget
-                    .build();
-                shumate_marker_layer.add_marker(&marker);
-                shumate_map.queue_draw();
-            },
-        ));
+    // 1. Clear out any previous widgets upon opening a second file.
+    while let Some(child) = main_box.last_child() {
+        main_box.remove(&child)
     }
+
+    // 2. Instantiate the main UI widgets.
+    let text_view = TextView::builder().monospace(true).build();
+    let frame_left = Frame::builder().build();
+    let frame_right = Frame::builder().build();
+    let left_frame_box = gtk4::Box::new(Orientation::Vertical, 10);
+    let right_frame_box = gtk4::Box::new(Orientation::Horizontal, 10);
+    let scrolled_window = ScrolledWindow::builder().child(&text_view).build();
+    let da_window = ScrolledWindow::builder()
+        .vexpand(true)
+        .hexpand(true)
+        .build();
+    let y_zoom_scale = Scale::with_range(Orientation::Vertical, 0.5, 4.0, 0.1);
+    let curr_pos_scale = Scale::with_range(Orientation::Vertical, 0.0, 1.0, 0.05);
+
+    // 3. Instantiate embedded widgets based on parsed fit data.
+    let (shumate_map, shumate_marker_layer) = build_map(&data);
+    let (da, _, yzm, curr_pos) = build_da(&data, &units_widget);
+    let text_buffer = text_view.buffer();
+    build_summary(&data, &units_widget, &text_buffer);
+
+    // 4. Connect embedded widgets to their parents.
+    da_window.set_child(Some(&da));
+    frame_right.set_child(Some(&da_window));
+    frame_left.set_child(Some(&shumate_map));
+    y_zoom_scale.set_adjustment(&yzm);
+    curr_pos_scale.set_adjustment(&curr_pos);
+
+    // 5. Configure the widget layout.
+    left_frame_box.append(&frame_left);
+    left_frame_box.set_homogeneous(true);
+    left_frame_box.append(&scrolled_window);
+    right_frame_box.append(&frame_right);
+    right_frame_box.append(&y_zoom_scale);
+    right_frame_box.append(&curr_pos_scale);
+    // Main box contains all of the above plus the graphs.
+    main_box.append(&left_frame_box);
+    main_box.append(&right_frame_box);
+
+    // 6. Size the widgets.
+    let (width, height) = get_geometry(&win);
+    let win_width = (FRACT_OF_SCREEN * width as f32).trunc() as i32;
+    let win_height = (FRACT_OF_SCREEN * height as f32).trunc() as i32;
+    win.set_default_width(win_width);
+    win.set_default_height(win_height);
+    scrolled_window.set_size_request(500, 300);
+    let da_window_height = win_height - 300;
+    let da_window_width = win_width - 600;
+    da_window.set_size_request(da_window_width, da_window_height);
+    da.set_size_request(
+        (0.90 * da_window.height() as f32) as i32,
+        (0.90 * da_window.width() as f32) as i32,
+    );
+    y_zoom_scale.set_width_request(30);
+    curr_pos_scale.set_width_request(30);
+    win.unmaximize();
+
+    // 7. Configure widgets not handled during instantiation.
+    y_zoom_scale.set_draw_value(false); // Ensure the value is not displayed on the scale itself
+    curr_pos_scale.set_draw_value(false); // Ensure the value is not displayed on the scale itself
+
+    // 8. Establish call-back routines for widget event handling.
+    // Redraw the drawing area when the zoom changes.
+    y_zoom_scale.adjustment().connect_value_changed(clone!(
+        #[strong]
+        da,
+        move |_| da.queue_draw()
+    ));
+    // Redraw the drawing area and map when the current postion changes.
+    curr_pos_scale.adjustment().connect_value_changed(clone!(
+        #[strong]
+        da,
+        #[strong]
+        data,
+        #[strong]
+        shumate_map,
+        #[strong]
+        shumate_marker_layer,
+        #[strong]
+        curr_pos,
+        move |_| {
+            // Update graphs.
+            da.queue_draw();
+            // Update map.
+            shumate_marker_layer.remove_all();
+            let units_widget = DropDown::builder().build(); // bogus value - no units required for position
+            let run_path = get_xy(&data, &units_widget, "position_lat", "position_long");
+            let idx = (curr_pos.value() * (run_path.len() as f64 - 1.0)).trunc() as usize;
+            let curr_lat = run_path.clone()[idx].0;
+            let curr_lon = run_path.clone()[idx].1;
+            let lat_deg = semi_to_degrees(curr_lat);
+            let lon_deg = semi_to_degrees(curr_lon);
+            let marker_text = Some(get_symbol(&data));
+            let marker_content = gtk4::Label::new(marker_text);
+            marker_content.set_halign(gtk4::Align::Center);
+            marker_content.set_valign(gtk4::Align::Baseline);
+            // Style the symbol with mark-up language.
+            marker_content.set_markup(Some(get_symbol(&data)).expect("No symbol."));
+            let widget = &marker_content;
+            let marker = Marker::builder()
+                //            .label()
+                .latitude(lat_deg)
+                .longitude(lon_deg)
+                .child(&widget.clone())
+                // Set the visual content widget
+                .build();
+            shumate_marker_layer.add_marker(&marker);
+            shumate_map.queue_draw();
+        },
+    ));
 }
 
 fn build_gui(app: &Application) {
@@ -1273,6 +1271,7 @@ fn build_gui(app: &Application) {
         .build();
     let uom = StringList::new(&["Metric", "US"]);
     let units_widget = DropDown::builder().model(&uom).build();
+
     btn.connect_clicked(clone!(
         #[strong]
         win,
@@ -1307,7 +1306,7 @@ fn build_gui(app: &Application) {
                                 let path_str = path.to_string_lossy();
                                 // Get values from fit file.
                                 let file_result = File::open(&*path_str);
-                                let file = match file_result {
+                                let mut file = match file_result {
                                     Ok(file) => file,
                                     Err(error) => match error.kind() {
                                         // Handle specifically "Not Found"
@@ -1319,7 +1318,21 @@ fn build_gui(app: &Application) {
                                         }
                                     },
                                 };
-                                parse_and_display_run(&win, &main_box, file, &units_widget);
+                                if let Ok(data) = fitparser::from_reader(&mut file) {
+                                    parse_and_display_run(&win, &main_box, &data, &units_widget);
+                                    // Hook-up the units_widget change handler.
+                                    units_widget.connect_selected_notify(clone!(
+                                        #[strong]
+                                        win,
+                                        #[strong]
+                                        main_box,
+                                        #[strong]
+                                        data,
+                                        move |me| {
+                                            parse_and_display_run(&win, &main_box, &data, &me);
+                                        }
+                                    ));
+                                }
                             }
                         }
                     } else {
@@ -1330,7 +1343,6 @@ fn build_gui(app: &Application) {
                     // once it goes out of scope or the window closes.
                 }
             ));
-
             // 3. Show the dialog
             native.show();
         }
