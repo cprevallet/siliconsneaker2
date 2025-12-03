@@ -933,16 +933,60 @@ fn build_summary(data: &Vec<FitDataRecord>, units_widget: &DropDown, text_buffer
                         "total_ascent" | "total_descent" => {
                             let val: f64 = fld.value().clone().try_into().unwrap();
                             let val_cvt = cvt_altitude(val as f32, &user_unit);
-                            let value_str =
-                                format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "feet");
-                            text_buffer.insert(&mut end, &value_str);
+                            match user_unit {
+                                Units::US => {
+                                    let value_str = format!(
+                                        "{:<40}: {:<.2} {:<}\n",
+                                        fld.name(),
+                                        val_cvt,
+                                        "feet"
+                                    );
+                                    text_buffer.insert(&mut end, &value_str);
+                                }
+                                Units::Metric => {
+                                    let value_str = format!(
+                                        "{:<40}: {:<.2} {:<}\n",
+                                        fld.name(),
+                                        val_cvt,
+                                        "meters"
+                                    );
+                                    text_buffer.insert(&mut end, &value_str);
+                                }
+                                Units::None => {
+                                    let value_str =
+                                        format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "");
+                                    text_buffer.insert(&mut end, &value_str);
+                                }
+                            }
                         }
                         "total_distance" => {
                             let val: f64 = fld.value().clone().try_into().unwrap();
                             let val_cvt = cvt_distance(val as f32, &user_unit);
-                            let value_str =
-                                format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "miles");
-                            text_buffer.insert(&mut end, &value_str);
+                            match user_unit {
+                                Units::US => {
+                                    let value_str = format!(
+                                        "{:<40}: {:<.2} {:<}\n",
+                                        fld.name(),
+                                        val_cvt,
+                                        "miles"
+                                    );
+                                    text_buffer.insert(&mut end, &value_str);
+                                }
+                                Units::Metric => {
+                                    let value_str = format!(
+                                        "{:<40}: {:<.2} {:<}\n",
+                                        fld.name(),
+                                        val_cvt,
+                                        "kilometers"
+                                    );
+                                    text_buffer.insert(&mut end, &value_str);
+                                }
+                                Units::None => {
+                                    let value_str =
+                                        format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "");
+                                    text_buffer.insert(&mut end, &value_str);
+                                }
+                            }
                         }
                         "total_elapsed_time" | "total_timer_time" => {
                             let val: f64 = fld.value().clone().try_into().unwrap();
@@ -959,16 +1003,52 @@ fn build_summary(data: &Vec<FitDataRecord>, units_widget: &DropDown, text_buffer
                         "min_temperature" | "max_temperature" | "avg_temperature" => {
                             let val: i64 = fld.value().try_into().expect("conversion failed");
                             let val_cvt = cvt_temperature(val as f32, &user_unit);
-                            let value_str =
-                                format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "°F");
-                            text_buffer.insert(&mut end, &value_str);
+                            match user_unit {
+                                Units::US => {
+                                    let value_str =
+                                        format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "°F");
+                                    text_buffer.insert(&mut end, &value_str);
+                                }
+                                Units::Metric => {
+                                    let value_str =
+                                        format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "°C");
+                                    text_buffer.insert(&mut end, &value_str);
+                                }
+                                Units::None => {
+                                    let value_str =
+                                        format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "");
+                                    text_buffer.insert(&mut end, &value_str);
+                                }
+                            }
                         }
                         "enhanced_avg_speed" | "enhanced_max_speed" => {
                             let val: f64 = fld.value().clone().try_into().unwrap();
                             let val_cvt = cvt_pace(val as f32, &user_unit);
-                            let value_str =
-                                format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "min/mile");
-                            text_buffer.insert(&mut end, &value_str);
+                            match user_unit {
+                                Units::US => {
+                                    let value_str = format!(
+                                        "{:<40}: {:<.2} {:<}\n",
+                                        fld.name(),
+                                        val_cvt,
+                                        "min/mile"
+                                    );
+                                    text_buffer.insert(&mut end, &value_str);
+                                }
+                                Units::Metric => {
+                                    let value_str = format!(
+                                        "{:<40}: {:<.2} {:<}\n",
+                                        fld.name(),
+                                        val_cvt,
+                                        "min/km"
+                                    );
+                                    text_buffer.insert(&mut end, &value_str);
+                                }
+                                Units::None => {
+                                    let value_str =
+                                        format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, "");
+                                    text_buffer.insert(&mut end, &value_str);
+                                }
+                            }
                         }
                         _ => print!("{}", ""), // matches other patterns
                     }
