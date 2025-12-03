@@ -880,6 +880,8 @@ fn get_geometry() -> (i32, i32) {
                     return (geometry0.width(), geometry0.height());
                 }
                 let g0 = geometry0.clone();
+                // 5. If there's a second monitor use the smallest resolution of the two.
+                // Is this really the best method?
                 if num_monitors == 2 {
                     if let Some(monitor_obj) = monitors.item(1) {
                         // Downcast the generic object to a GdkMonitor
@@ -900,13 +902,8 @@ fn get_geometry() -> (i32, i32) {
 }
 // Create the GUI.
 fn build_gui(app: &Application) {
-    let (width, height) = get_geometry();
-    let app_width = FRACT_OF_SCREEN * width as f32;
-    let app_height = FRACT_OF_SCREEN * height as f32;
     let win = ApplicationWindow::builder()
         .application(app)
-        .default_width(app_width.trunc() as i32)
-        .default_height(app_height.trunc() as i32)
         .title("SiliconSneaker II")
         .build();
 
@@ -936,6 +933,8 @@ fn build_gui(app: &Application) {
 
             // 2. Connect to the response signal
             native.connect_response(clone!(
+                #[strong]
+                win,
                 #[strong]
                 main_box,
                 move |dialog, response| {
@@ -1006,17 +1005,20 @@ fn build_gui(app: &Application) {
                                     main_box.append(&right_frame_box);
 
                                     // 6. Size the widgets.
-                                    scrolled_window.set_size_request(500, 300);
                                     let (width, height) = get_geometry();
-                                    let w_height = (height - 300) as f32;
-                                    let w_width = (width - 600) as f32;
-                                    da_window.set_size_request(
-                                        w_width.trunc() as i32,
-                                        w_height.trunc() as i32,
-                                    );
+                                    let win_width = (FRACT_OF_SCREEN * width as f32).trunc() as i32;
+                                    let win_height =
+                                        (FRACT_OF_SCREEN * height as f32).trunc() as i32;
+                                    win.set_default_width(win_width);
+                                    win.set_default_height(win_height);
+                                    scrolled_window.set_size_request(500, 300);
+                                    //                                    let (width, height) = get_geometry();
+                                    let w_height = win_height - 300;
+                                    let w_width = win_width - 600;
+                                    da_window.set_size_request(w_width, w_height);
                                     da.set_size_request(
-                                        (0.90 * da_window.height() as f64) as i32,
-                                        (0.90 * da_window.width() as f64) as i32,
+                                        (0.90 * da_window.height() as f32) as i32,
+                                        (0.90 * da_window.width() as f32) as i32,
                                     );
                                     y_zoom_scale.set_width_request(30);
                                     curr_pos_scale.set_width_request(30);
