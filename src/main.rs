@@ -43,10 +43,10 @@ fn get_unit_system(units_widget: &DropDown) -> Units {
         if let Ok(string_obj) = item_obj.downcast::<StringObject>() {
             let unit_string = String::from(string_obj.string());
             //println!("{:?}", unit_string);
-            if unit_string == "Metric" {
+            if unit_string == "🇪🇺 Metric" {
                 return Units::Metric;
             }
-            if unit_string == "US" {
+            if unit_string == "🇺🇸 US" {
                 return Units::US;
             }
         }
@@ -1308,18 +1308,18 @@ fn build_gui(app: &Application) {
         .margin_bottom(5)
         .margin_start(5)
         .margin_end(5)
-        .height_request(20)
+        .height_request(30)
         .width_request(50)
         .build();
-    let uom = StringList::new(&["Metric", "US"]);
+    let uom = StringList::new(&["🇪🇺 Metric", "🇺🇸 US"]);
     let units_widget = DropDown::builder()
         .model(&uom)
         .margin_top(5)
         .margin_bottom(5)
         .margin_start(5)
         .margin_end(5)
-        .height_request(20)
-        .width_request(50)
+        .height_request(30)
+        .width_request(100)
         .build();
 
     btn.connect_clicked(clone!(
