@@ -1125,7 +1125,7 @@ fn parse_and_display_run(
     }
 
     // 2. Instantiate the main UI widgets.
-    let text_view = TextView::builder().monospace(true).build();
+    let text_view = TextView::builder().monospace(true).margin_start(10).build();
     let frame_left = Frame::builder().build();
     let frame_right = Frame::builder().build();
     let left_frame_box = gtk4::Box::new(Orientation::Vertical, 10);
