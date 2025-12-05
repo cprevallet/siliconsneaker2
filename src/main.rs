@@ -1594,20 +1594,22 @@ fn build_gui(app: &Application) {
         },
     )); //button-connect-clicked
 
-    // let ui_state2 = Rc::clone(&ui_rc);
-    // ui.about_btn.connect_clicked(clone!(move |_| {
-    //     let ui = ui_state2.borrow_mut();
-    //     let dialog = gtk4::AboutDialog::builder()
-    //         .transient_for(&ui.win)
-    //         .modal(true)
-    //         .program_name("SiliconSneaker II")
-    //         .version("1.0.0")
-    //         .copyright("Copyright © 2025")
-    //         .comments("View your run files on the desktop!")
-    //         .authors(vec![
-    //             "Craig S. Prevallet <penguintx@hotmail.com>".to_string(),
-    //         ])
-    //         .build();
-    //     dialog.present();
-    // })); //button-connect-clicked
+    ui1.about_btn.connect_clicked(clone!(
+        #[strong]
+        ui1,
+        move |_| {
+            let dialog = gtk4::AboutDialog::builder()
+                .transient_for(&ui1.win)
+                .modal(true)
+                .program_name("SiliconSneaker II")
+                .version("1.0.0")
+                .copyright("Copyright © 2025")
+                .comments("View your run files on the desktop!")
+                .authors(vec![
+                    "Craig S. Prevallet <penguintx@hotmail.com>".to_string(),
+                ])
+                .build();
+            dialog.present();
+        }
+    )); //button-connect-clicked
 } // build_gui
