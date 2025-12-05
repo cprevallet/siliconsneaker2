@@ -37,7 +37,7 @@ fn get_unit_system(units_widget: &DropDown) -> Units {
     if units_widget.model() == None {
         return Units::None;
     }
-    let model = units_widget.model().expect("No units_widget model.");
+    let model = units_widget.model().unwrap();
     if let Some(item_obj) = model.item(units_widget.selected()) {
         if let Ok(string_obj) = item_obj.downcast::<StringObject>() {
             let unit_string = String::from(string_obj.string());
@@ -741,8 +741,6 @@ fn build_da(
 }
 
 fn add_marker_layer_to_map(map: &SimpleMap) -> MarkerLayer {
-    // Define the RGBA color using the builder pattern for gtk4::gdk::RGBA
-    //    let blue = gdk::RGBA::parse("blue").expect("Failed to parse color");
     let viewport = map.viewport().expect("No viewport.");
     let marker_layer = libshumate::MarkerLayer::new(&viewport);
     // Add the layer to the map
