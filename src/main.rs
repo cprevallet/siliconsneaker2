@@ -1363,7 +1363,17 @@ fn build_gui(app: &Application) {
                                 // Get values from fit file.
                                 let file_result = File::open(&*path_str);
                                 let mut file = match file_result {
-                                    Ok(file) => file,
+                                    Ok(file) => {
+                                        let c_title = win.title().unwrap().to_string().to_owned();
+                                        let mut pfx = c_title
+                                            .chars()
+                                            .take_while(|&ch| ch != '-')
+                                            .collect::<String>();
+                                        pfx.push_str(" -");
+                                        pfx.push_str(&path_str);
+                                        win.set_title(Some(&pfx.to_string()));
+                                        file
+                                    }
                                     Err(error) => match error.kind() {
                                         // Handle specifically "Not Found"
                                         ErrorKind::NotFound => {
