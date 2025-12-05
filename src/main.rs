@@ -1330,7 +1330,7 @@ fn parse_and_display_run(
             marker_content.set_halign(gtk4::Align::Center);
             marker_content.set_valign(gtk4::Align::Baseline);
             // Style the symbol with mark-up language.
-            marker_content.set_markup(Some(get_symbol(&data)).expect("No symbol."));
+            marker_content.set_markup(get_symbol(&data));
             let widget = &marker_content;
             let marker = Marker::builder()
                 //            .label()
