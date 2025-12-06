@@ -1179,9 +1179,8 @@ fn update_map_graph_and_summary_widgets(
         marker_layer.unwrap(),
         startstop_layer.unwrap(),
     );
-    let ui2 = ui.clone();
-    build_graphs(&data, &ui2);
-    build_summary(&data, &ui2);
+    build_graphs(&data, &ui);
+    build_summary(&data, &ui);
     return shumate_marker_layer;
 }
 
@@ -1228,51 +1227,49 @@ fn display_run(ui: &UserInterface, data: &Vec<FitDataRecord>) {
 
     let curr_pos = ui.curr_pos_adj.clone();
     let da2 = ui.da.clone();
-    let map2 = ui.map.clone();
+    let map = ui.map.clone();
     //    Redraw the drawing area and map when the current postion changes.
-    // ui.curr_pos_scale.adjustment().connect_value_changed(clone!(
-    //     #[strong]
-    //     data,
-    //     #[strong]
-    //     ui,
-    //     #[strong]
-    //     shumate_marker_layer,
-    //     #[strong]
-    //     curr_pos,
-    //     move |_| {
-    //         // Update graphs.
-    //         ui.da.queue_draw();
-    //         // Update map.
-    //         if shumate_marker_layer.is_some() {
-    //             shumate_marker_layer.as_ref().unwrap().remove_all();
-    //         }
-    //         let units_widget = DropDown::builder().build(); // bogus value - no units required for position
-    //         let run_path = get_xy(&data, &units_widget, "position_lat", "position_long");
-    //         let idx = (curr_pos.value() * (run_path.len() as f64 - 1.0)).trunc() as usize;
-    //         let curr_lat = run_path.clone()[idx].0;
-    //         let curr_lon = run_path.clone()[idx].1;
-    //         let lat_deg = semi_to_degrees(curr_lat);
-    //         let lon_deg = semi_to_degrees(curr_lon);
-    //         let marker_text = Some(get_symbol(&data));
-    //         let marker_content = gtk4::Label::new(marker_text);
-    //         marker_content.set_halign(gtk4::Align::Center);
-    //         marker_content.set_valign(gtk4::Align::Baseline);
-    //         // Style the symbol with mark-up language.
-    //         marker_content.set_markup(get_symbol(&data));
-    //         let widget = &marker_content;
-    //         let marker = Marker::builder()
-    //             //            .label()
-    //             .latitude(lat_deg)
-    //             .longitude(lon_deg)
-    //             .child(&widget.clone())
-    //             // Set the visual content widget
-    //             .build();
-    //         if shumate_marker_layer.is_some() {
-    //             shumate_marker_layer.as_ref().unwrap().add_marker(&marker);
-    //         }
-    //         ui.map.queue_draw();
-    //     },
-    // ));
+    ui.curr_pos_scale.adjustment().connect_value_changed(clone!(
+        #[strong]
+        data,
+        #[strong]
+        shumate_marker_layer,
+        #[strong]
+        curr_pos,
+        move |_| {
+            // Update graphs.
+            da2.queue_draw();
+            // Update map.
+            if shumate_marker_layer.is_some() {
+                shumate_marker_layer.as_ref().unwrap().remove_all();
+            }
+            let units_widget = DropDown::builder().build(); // bogus value - no units required for position
+            let run_path = get_xy(&data, &units_widget, "position_lat", "position_long");
+            let idx = (curr_pos.value() * (run_path.len() as f64 - 1.0)).trunc() as usize;
+            let curr_lat = run_path.clone()[idx].0;
+            let curr_lon = run_path.clone()[idx].1;
+            let lat_deg = semi_to_degrees(curr_lat);
+            let lon_deg = semi_to_degrees(curr_lon);
+            let marker_text = Some(get_symbol(&data));
+            let marker_content = gtk4::Label::new(marker_text);
+            marker_content.set_halign(gtk4::Align::Center);
+            marker_content.set_valign(gtk4::Align::Baseline);
+            // Style the symbol with mark-up language.
+            marker_content.set_markup(get_symbol(&data));
+            let widget = &marker_content;
+            let marker = Marker::builder()
+                //            .label()
+                .latitude(lat_deg)
+                .longitude(lon_deg)
+                .child(&widget.clone())
+                // Set the visual content widget
+                .build();
+            if shumate_marker_layer.is_some() {
+                shumate_marker_layer.as_ref().unwrap().add_marker(&marker);
+            }
+            map.queue_draw();
+        },
+    ));
 }
 struct UserInterface {
     win: ApplicationWindow,
