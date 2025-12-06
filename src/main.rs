@@ -5,9 +5,10 @@ use gtk4::cairo::Context;
 use gtk4::glib::clone;
 use gtk4::prelude::*;
 use gtk4::{
-    Adjustment, Application, ApplicationWindow, Button, DrawingArea, DropDown, FileChooserAction,
-    FileChooserNative, Frame, Image, Label, Orientation, ResponseType, Scale, ScrolledWindow,
-    StringList, StringObject, TextBuffer, TextView, gdk,
+    Adjustment, Application, ApplicationWindow, Button, ButtonsType, DrawingArea, DropDown,
+    FileChooserAction, FileChooserNative, Frame, Image, Label, MessageDialog, MessageType,
+    Orientation, ResponseType, Scale, ScrolledWindow, StringList, StringObject, TextBuffer,
+    TextView, gdk,
 };
 use libshumate::prelude::*;
 use libshumate::{Coordinate, Marker, MarkerLayer, PathLayer, SimpleMap};
@@ -1408,7 +1409,38 @@ fn instantiate_ui(app: &Application) -> UserInterface {
     ui.outer_box.append(&ui.main_pane);
     return ui;
 }
+/// Creates and presents a modal MessageDialog.
+fn show_error_dialog<W: IsA<gtk4::Window>>(parent: &W, text_str: String) {
+    // Create the MessageDialog
+    let dialog = MessageDialog::builder()
+        // Set the parent window to make it modal relative to the main window
+        .transient_for(parent)
+        // Set it to be modal (blocks interaction with the parent window)
+        .modal(true)
+        // Specify the type of dialog (e.g., Error, Info, Warning)
+        .message_type(MessageType::Error)
+        // Specify the button layout (e.g., Ok, YesNo, OkCancel)
+        .buttons(ButtonsType::Ok)
+        // Set the main text message
+        // .text("Error: Failed to process file.")
+        .text(text_str)
+        // Set the secondary, explanatory text (optional)
+        // .secondary_text(Some(
+        //     "The selected FIT file could not be parsed due to an unexpected format or corruption.",
+        // ))
+        .build();
 
+    // Connect to the response signal to handle button clicks (e.g., when "OK" is pressed)
+    dialog.connect_response(|dialog, response| {
+        // ResponseType::Ok is returned when the "OK" button (from ButtonsType::Ok) is clicked.
+        println!("Dialog response: {:?}", response);
+        // Destroy the dialog when a response is received
+        dialog.close();
+    });
+
+    // Display the dialog
+    dialog.present();
+}
 fn build_gui(app: &Application) {
     // Instantiate the views.
     let ui_original = instantiate_ui(app);
@@ -1465,10 +1497,20 @@ fn build_gui(app: &Application) {
                                     Err(error) => match error.kind() {
                                         // Handle specifically "Not Found"
                                         ErrorKind::NotFound => {
-                                            panic!("File not found.");
+                                            show_error_dialog(
+                                                &ui2.win,
+                                                "File not found.".to_string(),
+                                            );
+                                            return;
+                                            // panic!("File not found.");
                                         }
                                         _ => {
-                                            panic!("Hmmm...unknown error. Check file permissions?");
+                                            show_error_dialog(
+                                                &ui2.win,
+                                                "Error unknown. Permissions?".to_string(),
+                                            );
+                                            return;
+                                            // panic!("Hmmm...unknown error. Check file permissions?");
                                         }
                                     },
                                 };
