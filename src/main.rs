@@ -792,7 +792,9 @@ fn get_symbol(data: &Vec<FitDataRecord>) -> &str {
 fn build_map(
     data: &Vec<FitDataRecord>,
     map: SimpleMap,
-    mut path_layer: PathLayer,
+    path_layer: PathLayer,
+    marker_layer: MarkerLayer,
+    startstop_layer: MarkerLayer,
 ) -> Option<MarkerLayer> {
     if libshumate::MapSourceRegistry::with_defaults()
         .by_id("osm-mapnik")
@@ -815,8 +817,8 @@ fn build_map(
         }
         map.add_overlay_layer(&path_layer);
         // add pins for the starting and stopping points of the run
-        let startstop_layer = add_marker_layer_to_map(&map);
-        startstop_layer.as_ref().unwrap().remove_all();
+        // let startstop_layer = add_marker_layer_to_map(&map);
+        startstop_layer.remove_all();
         let len = run_path.len();
         if len > 0 {
             let start_lat_deg = semi_to_degrees(run_path[0..1][0].0);
@@ -843,14 +845,14 @@ fn build_map(
                 .child(&stop_widget.clone())
                 // Set the visual content widget
                 .build();
-            if startstop_layer.is_some() {
-                startstop_layer.as_ref().unwrap().add_marker(&start_marker);
-                startstop_layer.as_ref().unwrap().add_marker(&stop_marker);
-            }
+            startstop_layer.add_marker(&start_marker);
+            startstop_layer.add_marker(&stop_marker);
         }
+        map.add_overlay_layer(&startstop_layer);
         // Add a layer for indication of current position (aka the runner).
-        let marker_layer = add_marker_layer_to_map(&map);
-        marker_layer.as_ref().unwrap().remove_all();
+        // let marker_layer = add_marker_layer_to_map(&map);
+        marker_layer.remove_all();
+        map.add_overlay_layer(&marker_layer);
         // You may want to set an initial center and zoom level.
         if map.viewport().is_some() {
             let viewport = map.viewport().unwrap();
@@ -871,7 +873,7 @@ fn build_map(
             }
             viewport.set_zoom_level(14.0);
         }
-        return marker_layer;
+        return Some(marker_layer);
     }
     return None; // Can't find map source. Check internet access?
 }
@@ -1168,7 +1170,15 @@ fn update_map_graph_and_summary_widgets(
     // let ui1 = ui.clone();
     let map = ui.map.clone();
     let path_layer = ui.path_layer.clone();
-    let shumate_marker_layer = build_map(&data, map, path_layer.unwrap());
+    let marker_layer = ui.marker_layer.clone();
+    let startstop_layer = ui.startstop_layer.clone();
+    let shumate_marker_layer = build_map(
+        &data,
+        map,
+        path_layer.unwrap(),
+        marker_layer.unwrap(),
+        startstop_layer.unwrap(),
+    );
     let ui2 = ui.clone();
     build_graphs(&data, &ui2);
     build_summary(&data, &ui2);
