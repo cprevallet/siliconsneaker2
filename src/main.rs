@@ -708,7 +708,7 @@ fn add_marker_layer_to_map(map: &SimpleMap) -> Option<MarkerLayer> {
 }
 
 //Adds a PathLayer with a path of given coordinates to the map.
-fn add_path_layer_to_map(map: &SimpleMap, path_points: Vec<(f32, f32)>) {
+fn add_path_layer_to_map(map: &SimpleMap) -> Option<PathLayer> {
     if map.viewport().is_some() {
         let viewport = map.viewport().unwrap();
         let path_layer = PathLayer::new(&viewport);
@@ -721,13 +721,11 @@ fn add_path_layer_to_map(map: &SimpleMap, path_points: Vec<(f32, f32)>) {
             Err(_) => {}
         }
         path_layer.set_stroke_width(2.0); // Thickness in pixels
-        for (lat, lon) in path_points {
-            let coord = Coordinate::new_full(semi_to_degrees(lat), semi_to_degrees(lon));
-            path_layer.add_node(&coord);
-        }
         // Add the layer to the map
         map.add_overlay_layer(&path_layer);
+        return Some(path_layer.clone());
     }
+    return None;
 }
 
 // Helper function to return the date a run started on.
@@ -804,8 +802,14 @@ fn build_map(data: &Vec<FitDataRecord>) -> (Option<SimpleMap>, Option<MarkerLaye
         // Get values from fit file.
         let units_widget = DropDown::builder().build(); // bogus value - no units required for position
         let run_path = get_xy(&data, &units_widget, "position_lat", "position_long");
-        // Call the function to add the path layer
-        add_path_layer_to_map(&map, run_path.clone());
+        // add the path layer
+        let path_layer = add_path_layer_to_map(&map);
+        if path_layer.is_some() {
+            for (lat, lon) in run_path.clone() {
+                let coord = Coordinate::new_full(semi_to_degrees(lat), semi_to_degrees(lon));
+                path_layer.as_ref().unwrap().add_node(&coord);
+            }
+        }
         // add pins for the starting and stopping points of the run
         let startstop_layer = add_marker_layer_to_map(&map);
         let len = run_path.len();
