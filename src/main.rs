@@ -670,60 +670,15 @@ fn draw_graphs(
 }
 
 // Build drawing area.
-fn build_da(
-    data: &Vec<FitDataRecord>,
-    units_widget: &DropDown,
-) -> (DrawingArea, Adjustment, Adjustment, Adjustment) {
+fn build_da(data: &Vec<FitDataRecord>, ui: &UserInterface) -> DrawingArea {
     let drawing_area: DrawingArea = DrawingArea::builder().build();
     // Need to clone to use inside the closure.
     let d = data.clone();
-
-    let yzm = Adjustment::builder()
-        // The minimum value
-        .lower(0.2)
-        // The maximum value
-        .upper(4.0)
-        // Small step increment (for arrow keys/buttons)
-        .step_increment(0.1)
-        // Large step increment (for Page Up/Page Down keys)
-        .page_increment(0.2)
-        // The size of the viewable area (not often used for SpinButton, usually 0.0)
-        .page_size(0.0)
-        .build();
-    yzm.set_value(1.0);
-
-    let xzm = Adjustment::builder()
-        // The minimum value
-        .lower(0.5)
-        // The maximum value
-        .upper(2.0)
-        // Small step increment (for arrow keys/buttons)
-        .step_increment(0.1)
-        // Large step increment (for Page Up/Page Down keys)
-        .page_increment(0.2)
-        // The size of the viewable area (not often used for SpinButton, usually 0.0)
-        .page_size(0.0)
-        .build();
-    xzm.set_value(1.0);
-
-    // Represents a normalized fraction of the run.
-    let curr_pos = Adjustment::builder()
-        // The minimum value
-        .lower(0.0)
-        // The maximum value
-        .upper(1.0)
-        // Small step increment (for arrow keys/buttons)
-        .step_increment(0.05)
-        // Large step increment (for Page Up/Page Down keys)
-        .page_increment(0.1)
-        // The size of the viewable area (not often used for SpinButton, usually 0.0)
-        .page_size(0.0)
-        .build();
+    let units_widget = ui.units_widget.clone();
+    let y_zoom = ui.y_zoom_adj.clone();
+    let x_zoom = ui.x_zoom_adj.clone();
+    let curr_pos = ui.curr_pos_adj.clone();
     curr_pos.set_value(0.001);
-
-    let x_zoom = xzm.clone();
-    let y_zoom = yzm.clone();
-    let pos = curr_pos.clone();
     let units_clone = units_widget.clone();
     drawing_area.set_draw_func(move |_drawing_area, cr, width, height| {
         draw_graphs(
@@ -737,7 +692,7 @@ fn build_da(
             height as f64,
         );
     });
-    return (drawing_area, xzm, yzm, pos);
+    return drawing_area;
 }
 
 // Add a marker layer to the map.
@@ -1194,12 +1149,11 @@ fn build_summary(data: &Vec<FitDataRecord>, units_widget: &DropDown, text_buffer
     };
 }
 
-// This is the main body of the program.  After reading the fit file,
-// create and display the rest of the UI.
+// After reading the fit file, display the rest of the UI.
 fn display_run(ui: &UserInterface, data: &Vec<FitDataRecord>) {
     // 1. Instantiate embedded widgets based on parsed fit data.
     let (shumate_map, shumate_marker_layer) = build_map(&data);
-    let (da, _, yzm, curr_pos) = build_da(&data, &ui.units_widget);
+    let da = build_da(&data, &ui);
     build_summary(&data, &ui.units_widget, &ui.text_buffer);
 
     // 2. Connect embedded widgets to their parents.
@@ -1208,8 +1162,8 @@ fn display_run(ui: &UserInterface, data: &Vec<FitDataRecord>) {
     if shumate_map.is_some() {
         ui.frame_left.set_child(shumate_map.as_ref());
     }
-    ui.y_zoom_scale.set_adjustment(&yzm);
-    ui.curr_pos_scale.set_adjustment(&curr_pos);
+    // ui.y_zoom_scale.set_adjustment(&yzm);
+    // ui.curr_pos_scale.set_adjustment(&curr_pos);
 
     // 3. Configure the widget layout.
     ui.left_frame_pane.set_start_child(Some(&ui.frame_left));
@@ -1242,6 +1196,7 @@ fn display_run(ui: &UserInterface, data: &Vec<FitDataRecord>) {
         da,
         move |_| da.queue_draw()
     ));
+    let curr_pos = ui.curr_pos_adj.clone();
     // Redraw the drawing area and map when the current postion changes.
     ui.curr_pos_scale.adjustment().connect_value_changed(clone!(
         #[strong]
@@ -1308,6 +1263,7 @@ struct UserInterface {
     curr_pos_adj: Adjustment,
     curr_pos_scale: Scale,
     y_zoom_adj: Adjustment,
+    x_zoom_adj: Adjustment,
     y_zoom_scale: Scale,
     curr_pos_label: Label,
     y_zoom_label: Label,
@@ -1324,7 +1280,6 @@ fn instantiate_ui(app: &Application) -> UserInterface {
             .application(app)
             .title("SiliconSneaker II")
             .build(),
-
         // Main horizontal container to hold the two frames side-by-side,
         // outer box wraps main_pane.
         outer_box: gtk4::Box::builder()
@@ -1348,7 +1303,6 @@ fn instantiate_ui(app: &Application) -> UserInterface {
             .height_request(30)
             .width_request(50)
             .build(),
-
         text_view: TextView::builder().monospace(true).margin_start(10).build(),
         text_buffer: TextBuffer::builder().build(),
         frame_left: Frame::builder().build(),
@@ -1377,6 +1331,13 @@ fn instantiate_ui(app: &Application) -> UserInterface {
             .vexpand(false)
             .width_request(120)
             .height_request(30)
+            .build(),
+        x_zoom_adj: Adjustment::builder()
+            .lower(0.5)
+            .upper(2.0)
+            .step_increment(0.1)
+            .page_increment(0.1)
+            .value(1.0)
             .build(),
         y_zoom_adj: Adjustment::builder()
             .lower(0.5)
