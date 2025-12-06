@@ -94,13 +94,13 @@ fn standard_deviation(data: &Vec<f32>) -> f32 {
 
 // Find the largest non-NaN in vector, or NaN otherwise:
 fn max_vec(vector: Vec<f32>) -> f32 {
-    let v = vector.iter().cloned().fold(0. / 0., f32::max);
+    let v = vector.iter().copied().fold(0. / 0., f32::max);
     return v;
 }
 
 // Find the largest non-NaN in vector, or NaN otherwise:
 fn min_vec(vector: Vec<f32>) -> f32 {
-    let v = vector.iter().cloned().fold(0. / 0., f32::min);
+    let v = vector.iter().copied().fold(0. / 0., f32::min);
     return v;
 }
 
