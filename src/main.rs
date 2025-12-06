@@ -789,7 +789,11 @@ fn get_symbol(data: &Vec<FitDataRecord>) -> &str {
     return symbol;
 }
 // Build the map.
-fn build_map(data: &Vec<FitDataRecord>) -> (Option<SimpleMap>, Option<MarkerLayer>) {
+fn build_map(
+    data: &Vec<FitDataRecord>,
+    map: SimpleMap,
+    mut path_layer: PathLayer,
+) -> Option<MarkerLayer> {
     if libshumate::MapSourceRegistry::with_defaults()
         .by_id("osm-mapnik")
         .is_some()
@@ -797,20 +801,19 @@ fn build_map(data: &Vec<FitDataRecord>) -> (Option<SimpleMap>, Option<MarkerLaye
         let source = libshumate::MapSourceRegistry::with_defaults()
             .by_id("osm-mapnik")
             .unwrap();
-        let map = SimpleMap::new();
+        //let map = SimpleMap::new();
         map.set_map_source(Some(&source));
         // Get values from fit file.
         let units_widget = DropDown::builder().build(); // bogus value - no units required for position
         let run_path = get_xy(&data, &units_widget, "position_lat", "position_long");
         // add the path layer
-        let path_layer = add_path_layer_to_map(&map);
-        path_layer.as_ref().unwrap().remove_all();
-        if path_layer.is_some() {
-            for (lat, lon) in run_path.clone() {
-                let coord = Coordinate::new_full(semi_to_degrees(lat), semi_to_degrees(lon));
-                path_layer.as_ref().unwrap().add_node(&coord);
-            }
+        // let path_layer = add_path_layer_to_map(&ui.map);
+        path_layer.remove_all();
+        for (lat, lon) in run_path.clone() {
+            let coord = Coordinate::new_full(semi_to_degrees(lat), semi_to_degrees(lon));
+            path_layer.add_node(&coord);
         }
+        map.add_overlay_layer(&path_layer);
         // add pins for the starting and stopping points of the run
         let startstop_layer = add_marker_layer_to_map(&map);
         startstop_layer.as_ref().unwrap().remove_all();
@@ -868,9 +871,9 @@ fn build_map(data: &Vec<FitDataRecord>) -> (Option<SimpleMap>, Option<MarkerLaye
             }
             viewport.set_zoom_level(14.0);
         }
-        return (Some(map), marker_layer);
+        return marker_layer;
     }
-    return (None, None); // Can't find map source. Check internet access?
+    return None; // Can't find map source. Check internet access?
 }
 
 // Build the map.
@@ -1161,24 +1164,26 @@ fn build_summary(data: &Vec<FitDataRecord>, ui: &UserInterface) {
 fn update_map_graph_and_summary_widgets(
     ui: &UserInterface,
     data: &Vec<FitDataRecord>,
-) -> (Option<SimpleMap>, Option<MarkerLayer>) {
-    let (shumate_map, shumate_marker_layer) = build_map(&data);
-    build_graphs(&data, &ui);
-    build_summary(&data, &ui);
-    return (shumate_map, shumate_marker_layer);
+) -> Option<MarkerLayer> {
+    // let ui1 = ui.clone();
+    let map = ui.map.clone();
+    let path_layer = ui.path_layer.clone();
+    let shumate_marker_layer = build_map(&data, map, path_layer.unwrap());
+    let ui2 = ui.clone();
+    build_graphs(&data, &ui2);
+    build_summary(&data, &ui2);
+    return shumate_marker_layer;
 }
 
 // After reading the fit file, display the rest of the UI.
 fn display_run(ui: &UserInterface, data: &Vec<FitDataRecord>) {
     // 1. Instantiate embedded widgets based on parsed fit data.
-    let (shumate_map, shumate_marker_layer) = update_map_graph_and_summary_widgets(&ui, &data);
 
+    let shumate_marker_layer = update_map_graph_and_summary_widgets(&ui, &data);
     // 2. Connect embedded widgets to their parents.
     ui.da_window.set_child(Some(&ui.da));
     ui.frame_right.set_child(Some(&ui.da_window));
-    if shumate_map.is_some() {
-        ui.frame_left.set_child(shumate_map.as_ref());
-    }
+    ui.frame_left.set_child(Some(&ui.map));
 
     // 3. Configure the widget layout.
     ui.left_frame_pane.set_start_child(Some(&ui.frame_left));
@@ -1213,52 +1218,51 @@ fn display_run(ui: &UserInterface, data: &Vec<FitDataRecord>) {
 
     let curr_pos = ui.curr_pos_adj.clone();
     let da2 = ui.da.clone();
+    let map2 = ui.map.clone();
     //    Redraw the drawing area and map when the current postion changes.
-    ui.curr_pos_scale.adjustment().connect_value_changed(clone!(
-        #[strong]
-        data,
-        #[strong]
-        shumate_map,
-        #[strong]
-        shumate_marker_layer,
-        #[strong]
-        curr_pos,
-        move |_| {
-            // Update graphs.
-            da2.queue_draw();
-            // Update map.
-            if shumate_marker_layer.is_some() {
-                shumate_marker_layer.as_ref().unwrap().remove_all();
-            }
-            let units_widget = DropDown::builder().build(); // bogus value - no units required for position
-            let run_path = get_xy(&data, &units_widget, "position_lat", "position_long");
-            let idx = (curr_pos.value() * (run_path.len() as f64 - 1.0)).trunc() as usize;
-            let curr_lat = run_path.clone()[idx].0;
-            let curr_lon = run_path.clone()[idx].1;
-            let lat_deg = semi_to_degrees(curr_lat);
-            let lon_deg = semi_to_degrees(curr_lon);
-            let marker_text = Some(get_symbol(&data));
-            let marker_content = gtk4::Label::new(marker_text);
-            marker_content.set_halign(gtk4::Align::Center);
-            marker_content.set_valign(gtk4::Align::Baseline);
-            // Style the symbol with mark-up language.
-            marker_content.set_markup(get_symbol(&data));
-            let widget = &marker_content;
-            let marker = Marker::builder()
-                //            .label()
-                .latitude(lat_deg)
-                .longitude(lon_deg)
-                .child(&widget.clone())
-                // Set the visual content widget
-                .build();
-            if shumate_marker_layer.is_some() {
-                shumate_marker_layer.as_ref().unwrap().add_marker(&marker);
-            }
-            if shumate_map.is_some() {
-                shumate_map.as_ref().unwrap().queue_draw();
-            }
-        },
-    ));
+    // ui.curr_pos_scale.adjustment().connect_value_changed(clone!(
+    //     #[strong]
+    //     data,
+    //     #[strong]
+    //     ui,
+    //     #[strong]
+    //     shumate_marker_layer,
+    //     #[strong]
+    //     curr_pos,
+    //     move |_| {
+    //         // Update graphs.
+    //         ui.da.queue_draw();
+    //         // Update map.
+    //         if shumate_marker_layer.is_some() {
+    //             shumate_marker_layer.as_ref().unwrap().remove_all();
+    //         }
+    //         let units_widget = DropDown::builder().build(); // bogus value - no units required for position
+    //         let run_path = get_xy(&data, &units_widget, "position_lat", "position_long");
+    //         let idx = (curr_pos.value() * (run_path.len() as f64 - 1.0)).trunc() as usize;
+    //         let curr_lat = run_path.clone()[idx].0;
+    //         let curr_lon = run_path.clone()[idx].1;
+    //         let lat_deg = semi_to_degrees(curr_lat);
+    //         let lon_deg = semi_to_degrees(curr_lon);
+    //         let marker_text = Some(get_symbol(&data));
+    //         let marker_content = gtk4::Label::new(marker_text);
+    //         marker_content.set_halign(gtk4::Align::Center);
+    //         marker_content.set_valign(gtk4::Align::Baseline);
+    //         // Style the symbol with mark-up language.
+    //         marker_content.set_markup(get_symbol(&data));
+    //         let widget = &marker_content;
+    //         let marker = Marker::builder()
+    //             //            .label()
+    //             .latitude(lat_deg)
+    //             .longitude(lon_deg)
+    //             .child(&widget.clone())
+    //             // Set the visual content widget
+    //             .build();
+    //         if shumate_marker_layer.is_some() {
+    //             shumate_marker_layer.as_ref().unwrap().add_marker(&marker);
+    //         }
+    //         ui.map.queue_draw();
+    //     },
+    // ));
 }
 struct UserInterface {
     win: ApplicationWindow,
@@ -1273,6 +1277,10 @@ struct UserInterface {
     left_frame_pane: gtk4::Paned,
     right_frame_pane: gtk4::Paned,
     scrolled_window: ScrolledWindow,
+    map: libshumate::SimpleMap,
+    path_layer: Option<PathLayer>,
+    startstop_layer: Option<MarkerLayer>,
+    marker_layer: Option<MarkerLayer>,
     da_window: ScrolledWindow,
     curr_pos_adj: Adjustment,
     curr_pos_scale: Scale,
@@ -1290,7 +1298,7 @@ struct UserInterface {
 }
 
 fn instantiate_ui(app: &Application) -> UserInterface {
-    let ui = UserInterface {
+    let mut ui = UserInterface {
         win: ApplicationWindow::builder()
             .application(app)
             .title("SiliconSneaker II")
@@ -1329,6 +1337,10 @@ fn instantiate_ui(app: &Application) -> UserInterface {
             .orientation(Orientation::Horizontal)
             .build(),
         scrolled_window: ScrolledWindow::builder().build(),
+        map: SimpleMap::new(),
+        path_layer: None,
+        startstop_layer: None,
+        marker_layer: None,
         da_window: ScrolledWindow::builder()
             .vexpand(true)
             .hexpand(true)
@@ -1415,6 +1427,9 @@ fn instantiate_ui(app: &Application) -> UserInterface {
     ui.button_box.append(&ui.about_btn);
     ui.outer_box.append(&ui.button_box);
     ui.outer_box.append(&ui.main_pane);
+    ui.path_layer = Some(add_path_layer_to_map(&ui.map).unwrap());
+    ui.startstop_layer = Some(add_marker_layer_to_map(&ui.map).unwrap());
+    ui.marker_layer = Some(add_marker_layer_to_map(&ui.map).unwrap());
     return ui;
 }
 /// Creates and presents a modal MessageDialog.
@@ -1531,11 +1546,7 @@ fn build_gui(app: &Application) {
                                         #[strong]
                                         ui2,
                                         move |_| {
-                                            let (_shumate_map, _shumate_marker_layer) =
-                                                update_map_graph_and_summary_widgets(
-                                                    &ui2,
-                                                    &data_clone,
-                                                );
+                                            update_map_graph_and_summary_widgets(&ui2, &data_clone);
                                             // display_run(&ui2, &data_clone);
                                         },
                                     ));
