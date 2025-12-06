@@ -1415,9 +1415,11 @@ fn build_gui(app: &Application) {
     ui_original.win.maximize();
     ui_original.win.present();
 
-    // // Create a new reference count for the user_interface structure.
+    // Create a new reference count for the user_interface structure.
     let ui_rc = Rc::new(ui_original);
     let ui1 = Rc::clone(&ui_rc);
+
+    // Handle callbacks for btn and about_btn.
     ui1.btn.connect_clicked(clone!(
         #[strong]
         ui1,
