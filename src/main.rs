@@ -1350,7 +1350,7 @@ fn instantiate_ui(app: &Application) -> UserInterface {
             .upper(4.0)
             .step_increment(0.1)
             .page_increment(0.1)
-            .value(2.0)
+            .value(1.0)
             .build(),
         y_zoom_scale: Scale::builder()
             .orientation(Orientation::Horizontal)
