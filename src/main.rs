@@ -1,6 +1,6 @@
 use chrono::Datelike;
 use chrono::NaiveDateTime;
-use fitparser::{FitDataRecord, Value, profile::field_types::MesgNum};
+use fitparser::{FitDataField, FitDataRecord, Value, profile::field_types::MesgNum};
 use gtk4::cairo::Context;
 use gtk4::glib::clone;
 use gtk4::prelude::*;
@@ -837,6 +837,182 @@ fn build_map(
     return None; // Can't find map source. Check internet access?
 }
 
+// Given a field and units - convert the value to user-defined units and return a formatted string.
+fn format_string_for_field(fld: &FitDataField, user_unit: &Units) -> Option<String> {
+    match fld.name() {
+        "start_position_lat" | "start_position_long" | "end_position_lat" | "end_position_long" => {
+            let result: Result<i64, _> = fld.value().try_into();
+            match result {
+                Ok(semi) => {
+                    let degrees = semi_to_degrees(semi as f32);
+                    return Some(format!("{:<40}: {degrees:<6.3}°\n", fld.name(),));
+                }
+                Err(_) => return None,
+            }
+        }
+
+        "total_strides"
+        | "total_calories"
+        | "avg_heart_rate"
+        | "max_heart_rate"
+        | "avg_running_cadence"
+        | "max_running_cadence"
+        | "total_training_effect"
+        | "first_lap_index"
+        | "num_laps"
+        | "avg_fractional_cadence"
+        | "max_fractional_cadence"
+        | "total_anaerobic_training_effect"
+        | "sport"
+        | "sub_sport"
+        | "timestamp"
+        | "start_time" => {
+            return Some(format!(
+                "{:<40}: {:<#} {:<}\n",
+                fld.name(),
+                fld.value(),
+                fld.units()
+            ));
+        }
+        "total_ascent" | "total_descent" => {
+            let result: Result<f64, _> = fld.value().clone().try_into();
+            match result {
+                Ok(val) => {
+                    let val_cvt = cvt_altitude(val as f32, &user_unit);
+                    match user_unit {
+                        Units::US => {
+                            return Some(format!(
+                                "{:<40}: {:<.2} {:<}\n",
+                                fld.name(),
+                                val_cvt,
+                                "feet"
+                            ));
+                        }
+                        Units::Metric => {
+                            return Some(format!(
+                                "{:<40}: {:<.2} {:<}\n",
+                                fld.name(),
+                                val_cvt,
+                                "meters"
+                            ));
+                        }
+                        Units::None => {
+                            return Some(format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, ""));
+                        }
+                    }
+                }
+                Err(_) => return None,
+            }
+        }
+        "total_distance" => {
+            let result: Result<f64, _> = fld.value().clone().try_into();
+            match result {
+                Ok(val) => {
+                    let val_cvt = cvt_distance(val as f32, &user_unit);
+                    match user_unit {
+                        Units::US => {
+                            return Some(format!(
+                                "{:<40}: {:<.2} {:<}\n",
+                                fld.name(),
+                                val_cvt,
+                                "miles"
+                            ));
+                        }
+                        Units::Metric => {
+                            return Some(format!(
+                                "{:<40}: {:<.2} {:<}\n",
+                                fld.name(),
+                                val_cvt,
+                                "kilometers"
+                            ));
+                        }
+                        Units::None => {
+                            return Some(format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, ""));
+                        }
+                    }
+                }
+                Err(_) => return None,
+            }
+        }
+        "total_elapsed_time" | "total_timer_time" => {
+            let result: Result<f64, _> = fld.value().clone().try_into();
+            match result {
+                Ok(val) => {
+                    let val_cvt = cvt_elapsed_time(val as f32);
+                    return Some(format!(
+                        "{:<40}: {:01}h:{:02}m:{:02}s\n",
+                        fld.name(),
+                        val_cvt.0,
+                        val_cvt.1,
+                        val_cvt.2
+                    ));
+                }
+                Err(_) => return None,
+            }
+        }
+        "min_temperature" | "max_temperature" | "avg_temperature" => {
+            let result: Result<i64, _> = fld.value().clone().try_into();
+            match result {
+                Ok(val) => {
+                    let val_cvt = cvt_temperature(val as f32, &user_unit);
+                    match user_unit {
+                        Units::US => {
+                            return Some(format!(
+                                "{:<40}: {:<.2} {:<}\n",
+                                fld.name(),
+                                val_cvt,
+                                "°F"
+                            ));
+                        }
+                        Units::Metric => {
+                            return Some(format!(
+                                "{:<40}: {:<.2} {:<}\n",
+                                fld.name(),
+                                val_cvt,
+                                "°C"
+                            ));
+                        }
+                        Units::None => {
+                            return Some(format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, ""));
+                        }
+                    }
+                }
+                Err(_) => return None,
+            }
+        }
+        "enhanced_avg_speed" | "enhanced_max_speed" => {
+            let result: Result<f64, _> = fld.value().clone().try_into();
+            match result {
+                Ok(val) => {
+                    let val_cvt = cvt_pace(val as f32, &user_unit);
+                    match user_unit {
+                        Units::US => {
+                            return Some(format!(
+                                "{:<40}: {:<.2} {:<}\n",
+                                fld.name(),
+                                val_cvt,
+                                "min/mile"
+                            ));
+                        }
+                        Units::Metric => {
+                            return Some(format!(
+                                "{:<40}: {:<.2} {:<}\n",
+                                fld.name(),
+                                val_cvt,
+                                "min/km"
+                            ));
+                        }
+                        Units::None => {
+                            return Some(format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, ""));
+                        }
+                    }
+                }
+                Err(_) => return None,
+            }
+        }
+        _ => return None, // matches other patterns
+    }
+}
 // Build the map.
 fn build_summary(data: &Vec<FitDataRecord>, ui: &UserInterface) {
     // Get the enumerated value for the unit system the user selected.
@@ -872,217 +1048,9 @@ fn build_summary(data: &Vec<FitDataRecord>, ui: &UserInterface) {
                 }
                 // Retrieve the FitDataField struct.
                 for fld in item.fields().iter() {
-                    match fld.name() {
-                        "start_position_lat"
-                        | "start_position_long"
-                        | "end_position_lat"
-                        | "end_position_long" => {
-                            let result: Result<i64, _> = fld.value().try_into();
-                            match result {
-                                Ok(semi) => {
-                                    let degrees = semi_to_degrees(semi as f32);
-                                    let value_str =
-                                        format!("{:<40}: {degrees:<6.3}°\n", fld.name(),);
-                                    ui.text_buffer.insert(&mut end, &value_str);
-                                }
-                                Err(_) => {}
-                            }
-                        }
-
-                        "total_strides"
-                        | "total_calories"
-                        | "avg_heart_rate"
-                        | "max_heart_rate"
-                        | "avg_running_cadence"
-                        | "max_running_cadence"
-                        | "total_training_effect"
-                        | "first_lap_index"
-                        | "num_laps"
-                        | "avg_fractional_cadence"
-                        | "max_fractional_cadence"
-                        | "total_anaerobic_training_effect"
-                        | "sport"
-                        | "sub_sport"
-                        | "timestamp"
-                        | "start_time" => {
-                            let value_str = format!(
-                                "{:<40}: {:<#} {:<}\n",
-                                fld.name(),
-                                fld.value(),
-                                fld.units()
-                            );
-                            ui.text_buffer.insert(&mut end, &value_str);
-                        }
-                        "total_ascent" | "total_descent" => {
-                            let result: Result<f64, _> = fld.value().clone().try_into();
-                            match result {
-                                Ok(val) => {
-                                    let val_cvt = cvt_altitude(val as f32, &user_unit);
-                                    match user_unit {
-                                        Units::US => {
-                                            let value_str = format!(
-                                                "{:<40}: {:<.2} {:<}\n",
-                                                fld.name(),
-                                                val_cvt,
-                                                "feet"
-                                            );
-                                            ui.text_buffer.insert(&mut end, &value_str);
-                                        }
-                                        Units::Metric => {
-                                            let value_str = format!(
-                                                "{:<40}: {:<.2} {:<}\n",
-                                                fld.name(),
-                                                val_cvt,
-                                                "meters"
-                                            );
-                                            ui.text_buffer.insert(&mut end, &value_str);
-                                        }
-                                        Units::None => {
-                                            let value_str = format!(
-                                                "{:<40}: {:<.2} {:<}\n",
-                                                fld.name(),
-                                                val_cvt,
-                                                ""
-                                            );
-                                            ui.text_buffer.insert(&mut end, &value_str);
-                                        }
-                                    }
-                                }
-                                Err(_) => {}
-                            }
-                        }
-                        "total_distance" => {
-                            let result: Result<f64, _> = fld.value().clone().try_into();
-                            match result {
-                                Ok(val) => {
-                                    let val_cvt = cvt_distance(val as f32, &user_unit);
-                                    match user_unit {
-                                        Units::US => {
-                                            let value_str = format!(
-                                                "{:<40}: {:<.2} {:<}\n",
-                                                fld.name(),
-                                                val_cvt,
-                                                "miles"
-                                            );
-                                            ui.text_buffer.insert(&mut end, &value_str);
-                                        }
-                                        Units::Metric => {
-                                            let value_str = format!(
-                                                "{:<40}: {:<.2} {:<}\n",
-                                                fld.name(),
-                                                val_cvt,
-                                                "kilometers"
-                                            );
-                                            ui.text_buffer.insert(&mut end, &value_str);
-                                        }
-                                        Units::None => {
-                                            let value_str = format!(
-                                                "{:<40}: {:<.2} {:<}\n",
-                                                fld.name(),
-                                                val_cvt,
-                                                ""
-                                            );
-                                            ui.text_buffer.insert(&mut end, &value_str);
-                                        }
-                                    }
-                                }
-                                Err(_) => {}
-                            }
-                        }
-                        "total_elapsed_time" | "total_timer_time" => {
-                            let result: Result<f64, _> = fld.value().clone().try_into();
-                            match result {
-                                Ok(val) => {
-                                    let val_cvt = cvt_elapsed_time(val as f32);
-                                    let value_str = format!(
-                                        "{:<40}: {:01}h:{:02}m:{:02}s\n",
-                                        fld.name(),
-                                        val_cvt.0,
-                                        val_cvt.1,
-                                        val_cvt.2
-                                    );
-                                    ui.text_buffer.insert(&mut end, &value_str);
-                                }
-                                Err(_) => {}
-                            }
-                        }
-                        "min_temperature" | "max_temperature" | "avg_temperature" => {
-                            let result: Result<i64, _> = fld.value().clone().try_into();
-                            match result {
-                                Ok(val) => {
-                                    let val_cvt = cvt_temperature(val as f32, &user_unit);
-                                    match user_unit {
-                                        Units::US => {
-                                            let value_str = format!(
-                                                "{:<40}: {:<.2} {:<}\n",
-                                                fld.name(),
-                                                val_cvt,
-                                                "°F"
-                                            );
-                                            ui.text_buffer.insert(&mut end, &value_str);
-                                        }
-                                        Units::Metric => {
-                                            let value_str = format!(
-                                                "{:<40}: {:<.2} {:<}\n",
-                                                fld.name(),
-                                                val_cvt,
-                                                "°C"
-                                            );
-                                            ui.text_buffer.insert(&mut end, &value_str);
-                                        }
-                                        Units::None => {
-                                            let value_str = format!(
-                                                "{:<40}: {:<.2} {:<}\n",
-                                                fld.name(),
-                                                val_cvt,
-                                                ""
-                                            );
-                                            ui.text_buffer.insert(&mut end, &value_str);
-                                        }
-                                    }
-                                }
-                                Err(_) => {}
-                            }
-                        }
-                        "enhanced_avg_speed" | "enhanced_max_speed" => {
-                            let result: Result<f64, _> = fld.value().clone().try_into();
-                            match result {
-                                Ok(val) => {
-                                    let val_cvt = cvt_pace(val as f32, &user_unit);
-                                    match user_unit {
-                                        Units::US => {
-                                            let value_str = format!(
-                                                "{:<40}: {:<.2} {:<}\n",
-                                                fld.name(),
-                                                val_cvt,
-                                                "min/mile"
-                                            );
-                                            ui.text_buffer.insert(&mut end, &value_str);
-                                        }
-                                        Units::Metric => {
-                                            let value_str = format!(
-                                                "{:<40}: {:<.2} {:<}\n",
-                                                fld.name(),
-                                                val_cvt,
-                                                "min/km"
-                                            );
-                                            ui.text_buffer.insert(&mut end, &value_str);
-                                        }
-                                        Units::None => {
-                                            let value_str = format!(
-                                                "{:<40}: {:<.2} {:<}\n",
-                                                fld.name(),
-                                                val_cvt,
-                                                ""
-                                            );
-                                            ui.text_buffer.insert(&mut end, &value_str);
-                                        }
-                                    }
-                                }
-                                Err(_) => {}
-                            }
-                        }
-                        _ => print!("{}", ""), // matches other patterns
+                    let value_str = format_string_for_field(fld, &user_unit);
+                    if value_str.is_some() {
+                        ui.text_buffer.insert(&mut end, &value_str.unwrap());
                     }
                 }
             }
