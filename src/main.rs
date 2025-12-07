@@ -788,6 +788,32 @@ fn get_symbol(data: &Vec<FitDataRecord>) -> &str {
     let _ = "📍";
     return symbol;
 }
+// Move the marker based on the current position.
+fn update_marker_layer(data: &Vec<FitDataRecord>, layer: &MarkerLayer, curr_pos: &Adjustment) {
+    layer.remove_all();
+    let units_widget = DropDown::builder().build(); // bogus value - no units required for position
+    let run_path = get_xy(&data, &units_widget, "position_lat", "position_long");
+    let idx = (curr_pos.value() * (run_path.len() as f64 - 1.0)).trunc() as usize;
+    let curr_lat = run_path.clone()[idx].0;
+    let curr_lon = run_path.clone()[idx].1;
+    let lat_deg = semi_to_degrees(curr_lat);
+    let lon_deg = semi_to_degrees(curr_lon);
+    let marker_text = Some(get_symbol(&data));
+    let marker_content = gtk4::Label::new(marker_text);
+    marker_content.set_halign(gtk4::Align::Center);
+    marker_content.set_valign(gtk4::Align::Baseline);
+    // Style the symbol with mark-up language.
+    marker_content.set_markup(get_symbol(&data));
+    let widget = &marker_content;
+    let marker = Marker::builder()
+        //            .label()
+        .latitude(lat_deg)
+        .longitude(lon_deg)
+        .child(&widget.clone())
+        // Set the visual content widget
+        .build();
+    layer.add_marker(&marker);
+}
 // Build the map.
 fn build_map(
     data: &Vec<FitDataRecord>,
@@ -1236,34 +1262,9 @@ fn display_run(ui: &UserInterface, data: &Vec<FitDataRecord>) {
         move |_| {
             // Update graphs.
             da2.queue_draw();
+            // Update marker.
+            update_marker_layer(&data, shumate_marker_layer.as_ref().unwrap(), &curr_pos);
             // Update map.
-            if shumate_marker_layer.is_some() {
-                shumate_marker_layer.as_ref().unwrap().remove_all();
-            }
-            let units_widget = DropDown::builder().build(); // bogus value - no units required for position
-            let run_path = get_xy(&data, &units_widget, "position_lat", "position_long");
-            let idx = (curr_pos.value() * (run_path.len() as f64 - 1.0)).trunc() as usize;
-            let curr_lat = run_path.clone()[idx].0;
-            let curr_lon = run_path.clone()[idx].1;
-            let lat_deg = semi_to_degrees(curr_lat);
-            let lon_deg = semi_to_degrees(curr_lon);
-            let marker_text = Some(get_symbol(&data));
-            let marker_content = gtk4::Label::new(marker_text);
-            marker_content.set_halign(gtk4::Align::Center);
-            marker_content.set_valign(gtk4::Align::Baseline);
-            // Style the symbol with mark-up language.
-            marker_content.set_markup(get_symbol(&data));
-            let widget = &marker_content;
-            let marker = Marker::builder()
-                //            .label()
-                .latitude(lat_deg)
-                .longitude(lon_deg)
-                .child(&widget.clone())
-                // Set the visual content widget
-                .build();
-            if shumate_marker_layer.is_some() {
-                shumate_marker_layer.as_ref().unwrap().add_marker(&marker);
-            }
             map.queue_draw();
         },
     ));
