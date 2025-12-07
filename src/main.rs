@@ -41,7 +41,6 @@ fn get_unit_system(units_widget: &DropDown) -> Units {
         if let Some(item_obj) = model.item(units_widget.selected()) {
             if let Ok(string_obj) = item_obj.downcast::<StringObject>() {
                 let unit_string = String::from(string_obj.string());
-                //println!("{:?}", unit_string);
                 if unit_string == "🇪🇺 Metric" {
                     return Units::Metric;
                 }
@@ -143,7 +142,6 @@ fn get_sess_record_field(data: Vec<FitDataRecord>, field_name: &str) -> f64 {
                 for fld in item.fields().iter() {
                     if fld.name() == field_name {
                         return fld.value().clone().try_into().unwrap();
-                        //                         println!("{:?}", v64);
                     }
                 }
             }
@@ -164,7 +162,6 @@ fn get_msg_record_field_as_vec(data: Vec<FitDataRecord>, field_name: &str) -> Ve
                 for fld in item.fields().iter() {
                     if fld.name() == field_name {
                         let v64: f64 = fld.value().clone().try_into().unwrap();
-                        //                         println!("{:?}", v64);
                         field_vals.push(v64);
                     }
                 }
@@ -175,9 +172,7 @@ fn get_msg_record_field_as_vec(data: Vec<FitDataRecord>, field_name: &str) -> Ve
     return field_vals;
 }
 
-// Per Google Gemini AI
-/// Helper to convert various numeric Value variants to f64
-/*
+// Helper to convert various numeric Value variants to f64
 fn extract_f64(value: &Value) -> Option<f64> {
     match value {
         Value::Float64(v) => Some(*v),
@@ -193,66 +188,11 @@ fn extract_f64(value: &Value) -> Option<f64> {
         _ => None,
     }
 }
-*/
-
-// 1. Define a trait for types that can be extracted from a FIT Value
-pub trait FromFitValue: Sized {
-    fn from_value(v: &Value) -> Option<Self>;
-}
-
-// 2. Implement the trait for the types you care about (e.g., f64)
-impl FromFitValue for f64 {
-    fn from_value(v: &Value) -> Option<Self> {
-        match v {
-            Value::Float64(f) => Some(*f),
-            Value::Float32(f) => Some(*f as f64),
-            Value::UInt8(u) => Some(*u as f64),
-            Value::UInt16(u) => Some(*u as f64),
-            Value::UInt32(u) => Some(*u as f64),
-            Value::SInt8(i) => Some(*i as f64),
-            Value::SInt16(i) => Some(*i as f64),
-            Value::SInt32(i) => Some(*i as f64),
-            _ => None, // Handle non-numeric types by ignoring them
-        }
-    }
-}
-
-// 3. Implement for other types (e.g., i64) as needed
-impl FromFitValue for i64 {
-    fn from_value(v: &Value) -> Option<Self> {
-        match v {
-            Value::SInt64(i) => Some(*i),
-            Value::SInt32(i) => Some(*i as i64),
-            Value::UInt32(u) => Some(*u as i64),
-            Value::UInt8(u) => Some(*u as i64),
-            _ => None,
-        }
-    }
-}
-
-// 4. The Generic Helper Function
-pub fn extract_vec<T: FromFitValue>(value: &Value) -> Vec<T> {
+// Extract a Value Array to a vector of f64.
+fn extract_vector_f64(value: &Value) -> Vec<f64> {
     match value {
-        // Case A: Standard Array of Values
-        Value::Array(arr) => arr.iter().filter_map(T::from_value).collect(),
-
-        // Case B: Byte Array (Special optimization in FIT files)
-        // Value::Byte(bytes) => {
-        //     // We treat bytes as UInt8 scalars to convert them to T
-        //     bytes
-        //         .iter()
-        //         .filter_map(|&b| T::from_value(&Value::UInt8(b)))
-        //         .collect()
-        // }
-
-        // Case C: Scalar (Single value treated as 1-item array)
-        scalar => {
-            if let Some(val) = T::from_value(scalar) {
-                vec![val]
-            } else {
-                Vec::new()
-            }
-        }
+        Value::Array(arr) => arr.iter().filter_map(extract_f64).collect(),
+        _ => Vec::new(),
     }
 }
 
@@ -267,9 +207,8 @@ fn get_time_in_zone_field(data: &Vec<FitDataRecord>) -> (Option<Vec<f64>>, Optio
                 // Retrieve the FitDataField struct.
                 for fld in item.fields().iter() {
                     if fld.name() == "reference_mesg" && fld.value().to_string() == "session" {
-                        let floats: Vec<f64> = extract_vec(item.fields()[2].value());
-                        let hr_limits: Vec<f64> = extract_vec(item.fields()[3].value());
-                        //println!("{:?}", floats);
+                        let floats: Vec<f64> = extract_vector_f64(item.fields()[2].value());
+                        let hr_limits: Vec<f64> = extract_vector_f64(item.fields()[3].value());
                         result = (Some(floats), Some(hr_limits));
                     }
                 }
@@ -455,7 +394,6 @@ fn draw_graphs(
     let zoom_x: f32 = xzm.value() as f32;
     let zoom_y: f32 = yzm.value() as f32;
     let user_unit = get_unit_system(units_widget);
-    //        println!("{:?}", d);
     // --- 🎨 Custom Drawing Logic Starts Here ---
     let root = plotters_cairo::CairoBackend::new(&cr, (width as u32, height as u32))
         .unwrap()
@@ -888,8 +826,6 @@ fn build_map(
                     (semi_to_degrees(nec_lat as f32) + semi_to_degrees(swc_lat as f32)) / 2.0;
                 let center_long =
                     (semi_to_degrees(nec_long as f32) + semi_to_degrees(swc_long as f32)) / 2.0;
-                // println!("{:?}", center_lat);
-                // println!("{:?}", center_long);
                 viewport.set_location(center_lat, center_long);
             } else {
                 viewport.set_location(29.7601, -95.3701); // e.g. Houston, USA
@@ -916,7 +852,6 @@ fn build_summary(data: &Vec<FitDataRecord>, ui: &UserInterface) {
         match item.kind() {
             MesgNum::Session | MesgNum::Lap => {
                 // print all the data records in FIT file
-                //println!("{:#?}", item.fields());
                 if item.kind() == MesgNum::Session {
                     ui.text_buffer.insert(&mut end, "\n");
                     ui.text_buffer.insert(
@@ -1221,10 +1156,6 @@ fn display_run(ui: &UserInterface, data: &Vec<FitDataRecord>) {
     ui.left_frame_pane.set_start_child(Some(&ui.frame_left));
     ui.left_frame_pane.set_end_child(Some(&ui.scrolled_window));
     ui.right_frame_pane.set_start_child(Some(&ui.frame_right));
-    ui.controls_box.append(&ui.y_zoom_label);
-    ui.controls_box.append(&ui.y_zoom_scale);
-    ui.controls_box.append(&ui.curr_pos_label);
-    ui.controls_box.append(&ui.curr_pos_scale);
     ui.right_frame_pane.set_end_child(Some(&ui.controls_box));
     // Main box contains all of the above plus the graphs.
     ui.main_pane.set_start_child(Some(&ui.left_frame_pane));
@@ -1404,6 +1335,10 @@ fn instantiate_ui(app: &Application) -> UserInterface {
     ui.button_box.append(&ui.about_btn);
     ui.outer_box.append(&ui.button_box);
     ui.outer_box.append(&ui.main_pane);
+    ui.controls_box.append(&ui.y_zoom_label);
+    ui.controls_box.append(&ui.y_zoom_scale);
+    ui.controls_box.append(&ui.curr_pos_label);
+    ui.controls_box.append(&ui.curr_pos_scale);
     ui.path_layer = Some(add_path_layer_to_map(&ui.map).unwrap());
     ui.startstop_layer = Some(add_marker_layer_to_map(&ui.map).unwrap());
     ui.marker_layer = Some(add_marker_layer_to_map(&ui.map).unwrap());
@@ -1431,9 +1366,8 @@ fn show_error_dialog<W: IsA<gtk4::Window>>(parent: &W, text_str: String) {
         .build();
 
     // Connect to the response signal to handle button clicks (e.g., when "OK" is pressed)
-    dialog.connect_response(|dialog, response| {
+    dialog.connect_response(|dialog, _response| {
         // ResponseType::Ok is returned when the "OK" button (from ButtonsType::Ok) is clicked.
-        println!("Dialog response: {:?}", response);
         // Destroy the dialog when a response is received
         dialog.close();
     });
@@ -1565,7 +1499,6 @@ fn build_gui(app: &Application) {
                             }
                         }
                     } else {
-                        // println!("User cancelled");
                     }
                     // unlike FileChooserDialog, 'native' creates a transient reference.
                     // It's good practice to drop references, but GTK handles the cleanup
