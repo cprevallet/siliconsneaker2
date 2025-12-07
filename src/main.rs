@@ -1240,13 +1240,6 @@ fn display_run(ui: &UserInterface, data: &Vec<FitDataRecord>) {
     // Set where the splits start (in pixels from the top.)
     ui.left_frame_pane
         .set_position((0.5 * ui.win.height() as f32) as i32);
-
-    // 5. Establish call-back routines for widget event handling.
-    // a. redraw the drawing area when the zoom changes.
-    let da = ui.da.clone();
-    ui.y_zoom_scale
-        .adjustment()
-        .connect_value_changed(move |_| da.queue_draw());
 }
 struct UserInterface {
     win: ApplicationWindow,
@@ -1525,6 +1518,8 @@ fn build_gui(app: &Application) {
                                     display_run(&ui2, &data);
                                     // Hook-up the units_widget change handler.
                                     let data_clone = data.clone();
+
+                                    // update everything when the unit system changes.
                                     ui2.units_widget.connect_selected_notify(clone!(
                                         #[strong]
                                         ui2,
@@ -1532,6 +1527,12 @@ fn build_gui(app: &Application) {
                                             update_map_graph_and_summary_widgets(&ui2, &data_clone);
                                         },
                                     ));
+
+                                    // redraw the drawing area when the zoom changes.
+                                    let da = ui2.da.clone();
+                                    ui2.y_zoom_scale
+                                        .adjustment()
+                                        .connect_value_changed(move |_| da.queue_draw());
 
                                     // redraw the drawing area and map when the current position changes.
                                     let curr_pos = ui2.curr_pos_adj.clone();
