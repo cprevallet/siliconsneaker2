@@ -1061,6 +1061,111 @@ fn build_summary(data: &Vec<FitDataRecord>, ui: &UserInterface) {
     };
 }
 
+struct GraphAttributes<'a> {
+    plotvals: Vec<(f32, f32)>,
+    caption: &'a str,
+    xlabel: &'a str,
+    ylabel: &'a str,
+    plot_range: (std::ops::Range<f32>, std::ops::Range<f32>),
+    y_formatter: Box<dyn Fn(&f32) -> String>,
+    color: &'a RGBColor,
+}
+
+struct GraphCache<'a> {
+    unit_system: Units,
+    distance_pace: GraphAttributes<'a>,
+    distance_heart_rate: GraphAttributes<'a>,
+    distance_cadence: GraphAttributes<'a>,
+    distance_elevation: GraphAttributes<'a>,
+    distance_temperature: GraphAttributes<'a>,
+}
+
+// Calculate a cache of the graph attributes for display.
+fn instantiate_graph_cache(
+    d: &Vec<FitDataRecord>,
+    units_widget: &DropDown,
+    xzm: &Adjustment,
+    yzm: &Adjustment,
+    curr_adj: &Adjustment,
+    cr: &Context,
+) //-> GraphCache {
+{
+    let zoom_x: f32 = xzm.value() as f32;
+    let zoom_y: f32 = yzm.value() as f32;
+    let user_unit = get_unit_system(units_widget);
+    let num_formatter = |x: &f32| format!("{:7.2}", x);
+    let pace_formatter = |x: &f32| {
+        let mins = x.trunc();
+        let secs = x.fract() * 60.0;
+        format!("{:02.0}:{:02.0}", mins, secs)
+    };
+    let mut xlabel: &str = "";
+    let mut ylabel: &str = "";
+    // distance_pace
+    let xy = get_xy(&d, &units_widget, "distance", "enhanced_speed");
+    let range = set_plot_range(&xy.clone(), zoom_x, zoom_y);
+    match user_unit {
+        Units::US => {
+            ylabel = "Pace(min/mile)";
+            xlabel = "Distance(miles)";
+        }
+        Units::Metric => {
+            ylabel = "Pace(min/km)";
+            xlabel = "Distance(km)";
+        }
+        Units::None => {
+            ylabel = "";
+            xlabel = "";
+        }
+    }
+    let mut distance_pace = GraphAttributes {
+        plotvals: (xy),
+        caption: ("Pace"),
+        xlabel: (xlabel),
+        ylabel: (ylabel),
+        plot_range: (range),
+        y_formatter: (Box::new(pace_formatter)),
+        color: (&RED),
+    };
+    // distance_heart_rate
+    let xy = get_xy(&d, &units_widget, "distance", "heart_rate");
+    let range = set_plot_range(&xy.clone(), zoom_x, zoom_y);
+    match user_unit {
+        Units::US => {
+            ylabel = "Heart rate(bpm)";
+            xlabel = "Distance(miles)";
+        }
+        Units::Metric => {
+            ylabel = "Heart rate(bpm)";
+            xlabel = "Distance(km)";
+        }
+        Units::None => {
+            ylabel = "";
+            xlabel = "";
+        }
+    }
+    let mut distance_heart_rate = GraphAttributes {
+        plotvals: (xy),
+        caption: ("Heart rate"),
+        xlabel: (xlabel),
+        ylabel: (ylabel),
+        plot_range: (range),
+        y_formatter: (Box::new(num_formatter)),
+        color: (&BLUE),
+    };
+
+    // let mut gc = GraphCache {
+    // distance_pace = {
+    // distance_heart_rate: {
+    // },
+    // distance_cadence: {
+    // },
+    // distance_elevation: {
+    // },
+    // distance_temperature: {
+    // },
+}
+
 // Update the views when supplied with data.
 fn update_map_graph_and_summary_widgets(
     ui: &UserInterface,
