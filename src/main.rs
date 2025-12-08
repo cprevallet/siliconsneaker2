@@ -15,6 +15,7 @@ use libshumate::{Coordinate, Marker, MarkerLayer, PathLayer, SimpleMap};
 use plotters::prelude::*;
 use plotters::style::full_palette::BROWN;
 use plotters::style::full_palette::CYAN;
+use plotters_cairo::CairoBackend;
 use std::fs::File;
 use std::io::ErrorKind;
 use std::rc::Rc;
@@ -354,6 +355,7 @@ fn get_xy(
 // Use plotters.rs to draw a graph on the drawing area.
 fn draw_graphs(
     d: &Vec<FitDataRecord>,
+    gc: &GraphCache,
     units_widget: &DropDown,
     xzm: &Adjustment,
     yzm: &Adjustment,
@@ -362,9 +364,9 @@ fn draw_graphs(
     width: f64,
     height: f64,
 ) {
-    let zoom_x: f32 = xzm.value() as f32;
-    let zoom_y: f32 = yzm.value() as f32;
-    let user_unit = get_unit_system(units_widget);
+    // let zoom_x: f32 = xzm.value() as f32;
+    // let zoom_y: f32 = yzm.value() as f32;
+    // let user_unit = get_unit_system(units_widget);
     // --- 🎨 Custom Drawing Logic Starts Here ---
     let root = plotters_cairo::CairoBackend::new(&cr, (width as u32, height as u32))
         .unwrap()
@@ -373,217 +375,243 @@ fn draw_graphs(
     let areas = root.split_evenly((2, 3));
     // Declare and initialize.
     let num_formatter = |x: &f32| format!("{:7.2}", x);
-    let pace_formatter = |x: &f32| {
-        let mins = x.trunc();
-        let secs = x.fract() * 60.0;
-        format!("{:02.0}:{:02.0}", mins, secs)
-    };
-    let mut plotvals: Vec<(f32, f32)> = Vec::new();
-    let mut caption: &str = "";
-    let mut xlabel: &str = "";
-    let mut ylabel: &str = "";
-    let mut plot_range: (std::ops::Range<f32>, std::ops::Range<f32>) = (0_f32..1_f32, 0_f32..1_f32);
-    let mut y_formatter: Box<dyn Fn(&f32) -> String> = Box::new(num_formatter);
-    let mut color = &RED;
+    // let pace_formatter = |x: &f32| {
+    //     let mins = x.trunc();
+    //     let secs = x.fract() * 60.0;
+    //     format!("{:02.0}:{:02.0}", mins, secs)
+    // };
+    // let mut plotvals: Vec<(f32, f32)> = Vec::new();
+    // let mut caption: &str = "";
+    // let mut xlabel: &str = "";
+    // let mut ylabel: &str = "";
+    // let mut plot_range: (std::ops::Range<f32>, std::ops::Range<f32>) = (0_f32..1_f32, 0_f32..1_f32);
+    // let mut y_formatter: Box<dyn Fn(&f32) -> String> = Box::new(num_formatter);
+    // let mut color = &RED;
     for (a, idx) in areas.iter().zip(1..) {
         //let root = root.margin(50, 50, 50, 50);
         // After this point, we should be able to construct a chart context
         if idx == 1 {
-            plotvals = get_xy(&d, &units_widget, "distance", "enhanced_speed");
-            if plotvals.len() == 0 {
+            if gc.distance_pace.plotvals.len() == 0 {
                 continue;
-            }
-            plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
-            y_formatter = Box::new(pace_formatter);
-            caption = "Pace";
-            match user_unit {
-                Units::US => {
-                    ylabel = "Pace(min/mile)";
-                    xlabel = "Distance(miles)";
-                }
-                Units::Metric => {
-                    ylabel = "Pace(min/km)";
-                    xlabel = "Distance(km)";
-                }
-                Units::None => {
-                    ylabel = "";
-                    xlabel = "";
-                }
-            }
-            color = &GREEN;
+            };
+            // plotvals = get_xy(&d, &units_widget, "distance", "enhanced_speed");
+            build_individual_graph(
+                gc.distance_pace.plotvals,
+                gc.distance_pace.caption,
+                gc.distance_pace.xlabel,
+                gc.distance_pace.ylabel,
+                gc.distance_pace.plot_range,
+                gc.distance_pace.y_formatter,
+                gc.distance_pace.color,
+                curr_adj,
+                a,
+            );
+            // plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
+            // y_formatter = Box::new(pace_formatter);
+            // caption = "Pace";
+            // match user_unit {
+            //     Units::US => {
+            //         ylabel = "Pace(min/mile)";
+            //         xlabel = "Distance(miles)";
+            //     }
+            //     Units::Metric => {
+            //         ylabel = "Pace(min/km)";
+            //         xlabel = "Distance(km)";
+            //     }
+            //     Units::None => {
+            //         ylabel = "";
+            //         xlabel = "";
+            //     }
+            // }
+            // color = &GREEN;
         }
         if idx == 2 {
-            plotvals = get_xy(&d, &units_widget, "distance", "heart_rate");
+            // plotvals = get_xy(&d, &units_widget, "distance", "heart_rate");
             if plotvals.len() == 0 {
                 continue;
             }
-            plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
-            y_formatter = Box::new(num_formatter);
-            caption = "Heart rate";
-            match user_unit {
-                Units::US => {
-                    ylabel = "Heart rate(bpm)";
-                    xlabel = "Distance(miles)";
-                }
-                Units::Metric => {
-                    ylabel = "Heart rate(bpm)";
-                    xlabel = "Distance(km)";
-                }
-                Units::None => {
-                    ylabel = "";
-                    xlabel = "";
-                }
-            }
-            color = &BLUE;
+            // plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
+            // y_formatter = Box::new(num_formatter);
+            // caption = "Heart rate";
+            // match user_unit {
+            //     Units::US => {
+            //         ylabel = "Heart rate(bpm)";
+            //         xlabel = "Distance(miles)";
+            //     }
+            //     Units::Metric => {
+            //         ylabel = "Heart rate(bpm)";
+            //         xlabel = "Distance(km)";
+            //     }
+            //     Units::None => {
+            //         ylabel = "";
+            //         xlabel = "";
+            //     }
+            // }
+            // color = &BLUE;
         }
         if idx == 3 {
-            plotvals = get_xy(&d, &units_widget, "distance", "cadence");
+            // plotvals = get_xy(&d, &units_widget, "distance", "cadence");
             if plotvals.len() == 0 {
                 continue;
             }
-            plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
-            y_formatter = Box::new(num_formatter);
-            caption = "Cadence";
-            match user_unit {
-                Units::US => {
-                    ylabel = "Cadence";
-                    xlabel = "Distance(miles)";
-                }
-                Units::Metric => {
-                    ylabel = "Cadence";
-                    xlabel = "Distance(km)";
-                }
-                Units::None => {
-                    ylabel = "";
-                    xlabel = "";
-                }
-            }
-            color = &CYAN;
+            // plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
+            // y_formatter = Box::new(num_formatter);
+            // caption = "Cadence";
+            // match user_unit {
+            //     Units::US => {
+            //         ylabel = "Cadence";
+            //         xlabel = "Distance(miles)";
+            //     }
+            //     Units::Metric => {
+            //         ylabel = "Cadence";
+            //         xlabel = "Distance(km)";
+            //     }
+            //     Units::None => {
+            //         ylabel = "";
+            //         xlabel = "";
+            //     }
+            // }
+            // color = &CYAN;
         }
         if idx == 4 {
-            plotvals = get_xy(&d, &units_widget, "distance", "enhanced_altitude");
+            // plotvals = get_xy(&d, &units_widget, "distance", "enhanced_altitude");
             if plotvals.len() == 0 {
                 continue;
             }
-            plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
-            y_formatter = Box::new(num_formatter);
-            caption = "Elevation";
-            match user_unit {
-                Units::US => {
-                    ylabel = "Elevation(feet)";
-                    xlabel = "Distance(miles)";
-                }
-                Units::Metric => {
-                    ylabel = "Elevation(m)";
-                    xlabel = "Distance(km)";
-                }
-                Units::None => {
-                    ylabel = "";
-                    xlabel = "";
-                }
-            }
-            color = &RED;
+            // plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
+            // y_formatter = Box::new(num_formatter);
+            // caption = "Elevation";
+            // match user_unit {
+            //     Units::US => {
+            //         ylabel = "Elevation(feet)";
+            //         xlabel = "Distance(miles)";
+            //     }
+            //     Units::Metric => {
+            //         ylabel = "Elevation(m)";
+            //         xlabel = "Distance(km)";
+            //     }
+            //     Units::None => {
+            //         ylabel = "";
+            //         xlabel = "";
+            //     }
+            // }
+            // color = &RED;
         }
         if idx == 5 {
-            plotvals = get_xy(&d, &units_widget, "distance", "temperature");
+            // plotvals = get_xy(&d, &units_widget, "distance", "temperature");
             if plotvals.len() == 0 {
                 continue;
             }
-            plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
-            y_formatter = Box::new(num_formatter);
-            caption = "Temperature";
-            match user_unit {
-                Units::US => {
-                    ylabel = "Temperature(°F)";
-                    xlabel = "Distance(miles)";
-                }
-                Units::Metric => {
-                    ylabel = "Temperature(°C)";
-                    xlabel = "Distance(km)";
-                }
-                Units::None => {
-                    ylabel = "";
-                    xlabel = "";
-                }
-            }
-            color = &BROWN;
+            // plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
+            // y_formatter = Box::new(num_formatter);
+            // caption = "Temperature";
+            // match user_unit {
+            //     Units::US => {
+            //         ylabel = "Temperature(°F)";
+            //         xlabel = "Distance(miles)";
+            //     }
+            //     Units::Metric => {
+            //         ylabel = "Temperature(°C)";
+            //         xlabel = "Distance(km)";
+            //     }
+            //     Units::None => {
+            //         ylabel = "";
+            //         xlabel = "";
+            //     }
+            // }
+            // color = &BROWN;
         }
         if idx == 6 {
             break;
         }
-        let mut chart = ChartBuilder::on(&a)
-            // Set the caption of the chart
-            .caption(caption, ("sans-serif", 16).into_font())
-            // Set the size of the label region
-            .x_label_area_size(40)
-            .y_label_area_size(60)
-            .margin(10)
-            // Finally attach a coordinate on the drawing area and make a chart context
-            .build_cartesian_2d(plot_range.clone().0, plot_range.clone().1)
-            .unwrap();
-        let _ = chart
-            .configure_mesh()
-            // We can customize the maximum number of labels allowed for each axis
-            .x_labels(5)
-            .y_labels(5)
-            .x_desc(xlabel)
-            .y_desc(ylabel)
-            .y_label_formatter(&y_formatter)
-            .draw();
-        // // And we can draw something in the drawing area
-        // We need to clone plotvals each time we make a call to LineSeries and PointSeries
-        let _ = chart.draw_series(LineSeries::new(plotvals.clone(), color));
-        // Calculate the hairline.
-        let idx = (curr_adj.value() * (plotvals.len() as f64 - 1.0)).trunc() as usize;
-        if idx > 0 && idx < plotvals.len() - 1 {
-            let hair_x = plotvals[idx].0;
-            let hair_y = plotvals[idx].1;
-            let mylabel = format!(
-                "{:<1}: {:<5.2}{:<1}: {:>1}",
-                xlabel,
-                hair_x,
-                ylabel,
-                &y_formatter(&hair_y)
-            )
-            .to_string();
-            let hair_y_min = plot_range.clone().0.start;
-            let hair_y_max = plot_range.clone().1.end;
-            let mut hairlinevals: Vec<(f32, f32)> = Vec::new();
-            hairlinevals.push((hair_x, hair_y_min));
-            hairlinevals.push((hair_x, hair_y_max));
-            let _ = chart
-                .draw_series(DashedLineSeries::new(
-                    hairlinevals,
-                    1,
-                    4,
-                    ShapeStyle {
-                        color: BLACK.mix(1.0),
-                        filled: false,
-                        stroke_width: 1,
-                    },
-                ))
-                .unwrap()
-                .label(mylabel);
-
-            chart
-                .configure_series_labels()
-                .position(SeriesLabelPosition::UpperLeft)
-                .margin(5)
-                .legend_area_size(0)
-                .label_font(("Calibri", 10))
-                .draw()
-                .unwrap();
-        }
     }
+
     let _ = root.present();
     // --- Custom Drawing Logic Ends Here ---
 }
 
+fn build_individual_graph(
+    plotvals: Vec<(f32, f32)>,
+    caption: &str,
+    xlabel: &str,
+    ylabel: &str,
+    plot_range: (std::ops::Range<f32>, std::ops::Range<f32>),
+    y_formatter: Box<dyn Fn(&f32) -> String>,
+    color: &RGBColor,
+    curr_adj: &Adjustment,
+    a: &plotters::drawing::DrawingArea<CairoBackend<'_>, Shift>,
+) {
+    let mut chart = ChartBuilder::on(&a)
+        // Set the caption of the chart
+        .caption(caption, ("sans-serif", 16).into_font())
+        // Set the size of the label region
+        .x_label_area_size(40)
+        .y_label_area_size(60)
+        .margin(10)
+        // Finally attach a coordinate on the drawing area and make a chart context
+        .build_cartesian_2d(plot_range.clone().0, plot_range.clone().1)
+        .unwrap();
+    let _ = chart
+        .configure_mesh()
+        // We can customize the maximum number of labels allowed for each axis
+        .x_labels(5)
+        .y_labels(5)
+        .x_desc(xlabel)
+        .y_desc(ylabel)
+        .y_label_formatter(&y_formatter)
+        .draw();
+    // // And we can draw something in the drawing area
+    // We need to clone plotvals each time we make a call to LineSeries and PointSeries
+    let _ = chart.draw_series(LineSeries::new(plotvals.clone(), color));
+    // Calculate the hairline.
+    let idx = (curr_adj.value() * (plotvals.len() as f64 - 1.0)).trunc() as usize;
+    if idx > 0 && idx < plotvals.len() - 1 {
+        let hair_x = plotvals[idx].0;
+        let hair_y = plotvals[idx].1;
+        let mylabel = format!(
+            "{:<1}: {:<5.2}{:<1}: {:>1}",
+            xlabel,
+            hair_x,
+            ylabel,
+            &y_formatter(&hair_y)
+        )
+        .to_string();
+        let hair_y_min = plot_range.clone().0.start;
+        let hair_y_max = plot_range.clone().1.end;
+        let mut hairlinevals: Vec<(f32, f32)> = Vec::new();
+        hairlinevals.push((hair_x, hair_y_min));
+        hairlinevals.push((hair_x, hair_y_max));
+        let _ = chart
+            .draw_series(DashedLineSeries::new(
+                hairlinevals,
+                1,
+                4,
+                ShapeStyle {
+                    color: BLACK.mix(1.0),
+                    filled: false,
+                    stroke_width: 1,
+                },
+            ))
+            .unwrap()
+            .label(mylabel);
+
+        chart
+            .configure_series_labels()
+            .position(SeriesLabelPosition::UpperLeft)
+            .margin(5)
+            .legend_area_size(0)
+            .label_font(("Calibri", 10))
+            .draw()
+            .unwrap();
+    }
+}
+
 // Build drawing area.
-fn build_graphs(data: &Vec<FitDataRecord>, ui: &UserInterface) {
+fn build_graphs(data: &Vec<FitDataRecord>, graph_cache: &GraphCache, ui: &UserInterface) {
     //    let drawing_area: DrawingArea = DrawingArea::builder().build();
     // Need to clone to use inside the closure.
     let d = data.clone();
+    let gc = graph_cache.clone();
     let units_widget = ui.units_widget.clone();
     let y_zoom = ui.y_zoom_adj.clone();
     let x_zoom = ui.x_zoom_adj.clone();
@@ -594,6 +622,7 @@ fn build_graphs(data: &Vec<FitDataRecord>, ui: &UserInterface) {
         .set_draw_func(move |_drawing_area, cr, width, height| {
             draw_graphs(
                 &d,
+                &gc,
                 &units_clone,
                 &x_zoom,
                 &y_zoom,
@@ -1072,7 +1101,6 @@ struct GraphAttributes<'a> {
 }
 
 struct GraphCache<'a> {
-    unit_system: Units,
     distance_pace: GraphAttributes<'a>,
     distance_heart_rate: GraphAttributes<'a>,
     distance_cadence: GraphAttributes<'a>,
@@ -1081,15 +1109,12 @@ struct GraphCache<'a> {
 }
 
 // Calculate a cache of the graph attributes for display.
-fn instantiate_graph_cache(
-    d: &Vec<FitDataRecord>,
-    units_widget: &DropDown,
-    xzm: &Adjustment,
-    yzm: &Adjustment,
-    curr_adj: &Adjustment,
-    cr: &Context,
-) //-> GraphCache {
-{
+fn instantiate_graph_cache<'a>(
+    d: &'a Vec<FitDataRecord>,
+    units_widget: &'a DropDown,
+    xzm: &'a Adjustment,
+    yzm: &'a Adjustment,
+) -> GraphCache<'a> {
     let zoom_x: f32 = xzm.value() as f32;
     let zoom_y: f32 = yzm.value() as f32;
     let user_unit = get_unit_system(units_widget);
@@ -1118,7 +1143,7 @@ fn instantiate_graph_cache(
             xlabel = "";
         }
     }
-    let mut distance_pace = GraphAttributes {
+    let distance_pace = GraphAttributes {
         plotvals: (xy),
         caption: ("Pace"),
         xlabel: (xlabel),
@@ -1144,7 +1169,7 @@ fn instantiate_graph_cache(
             xlabel = "";
         }
     }
-    let mut distance_heart_rate = GraphAttributes {
+    let distance_heart_rate = GraphAttributes {
         plotvals: (xy),
         caption: ("Heart rate"),
         xlabel: (xlabel),
@@ -1153,17 +1178,92 @@ fn instantiate_graph_cache(
         y_formatter: (Box::new(num_formatter)),
         color: (&BLUE),
     };
-
-    // let mut gc = GraphCache {
-    // distance_pace = {
-    // distance_heart_rate: {
-    // },
-    // distance_cadence: {
-    // },
-    // distance_elevation: {
-    // },
-    // distance_temperature: {
-    // },
+    // distance-cadence
+    let xy = get_xy(&d, &units_widget, "distance", "cadence");
+    let range = set_plot_range(&xy.clone(), zoom_x, zoom_y);
+    match user_unit {
+        Units::US => {
+            ylabel = "Cadence";
+            xlabel = "Distance(miles)";
+        }
+        Units::Metric => {
+            ylabel = "Cadence";
+            xlabel = "Distance(km)";
+        }
+        Units::None => {
+            ylabel = "";
+            xlabel = "";
+        }
+    }
+    let distance_cadence = GraphAttributes {
+        plotvals: (xy),
+        caption: ("Cadence"),
+        xlabel: (xlabel),
+        ylabel: (ylabel),
+        plot_range: (range),
+        y_formatter: (Box::new(num_formatter)),
+        color: (&CYAN),
+    };
+    //distance-elevation
+    let xy = get_xy(&d, &units_widget, "distance", "enhanced_altitude");
+    let range = set_plot_range(&xy.clone(), zoom_x, zoom_y);
+    match user_unit {
+        Units::US => {
+            ylabel = "Elevation(feet)";
+            xlabel = "Distance(miles)";
+        }
+        Units::Metric => {
+            ylabel = "Elevation(m)";
+            xlabel = "Distance(km)";
+        }
+        Units::None => {
+            ylabel = "";
+            xlabel = "";
+        }
+    }
+    let distance_elevation = GraphAttributes {
+        plotvals: (xy),
+        caption: ("Elevation"),
+        xlabel: (xlabel),
+        ylabel: (ylabel),
+        plot_range: (range),
+        y_formatter: (Box::new(num_formatter)),
+        color: (&RED),
+    };
+    // distance-temperature
+    let xy = get_xy(&d, &units_widget, "distance", "temperature");
+    let range = set_plot_range(&xy.clone(), zoom_x, zoom_y);
+    match user_unit {
+        Units::US => {
+            ylabel = "Temperature(°F)";
+            xlabel = "Distance(miles)";
+        }
+        Units::Metric => {
+            ylabel = "Temperature(°C)";
+            xlabel = "Distance(km)";
+        }
+        Units::None => {
+            ylabel = "";
+            xlabel = "";
+        }
+    }
+    let distance_temperature = GraphAttributes {
+        plotvals: (xy),
+        caption: ("Temperature"),
+        xlabel: (xlabel),
+        ylabel: (ylabel),
+        plot_range: (range),
+        y_formatter: (Box::new(num_formatter)),
+        color: (&BROWN),
+    };
+    let gc: GraphCache = GraphCache {
+        distance_pace: distance_pace,
+        distance_heart_rate: distance_heart_rate,
+        distance_cadence: distance_cadence,
+        distance_elevation: distance_elevation,
+        distance_temperature: distance_temperature,
+    };
+    return gc;
 }
 
 // Update the views when supplied with data.
@@ -1171,7 +1271,10 @@ fn update_map_graph_and_summary_widgets(
     ui: &UserInterface,
     data: &Vec<FitDataRecord>,
 ) -> Option<MarkerLayer> {
-    // let ui1 = ui.clone();
+    let y_zoom = ui.y_zoom_adj.clone();
+    let x_zoom = ui.x_zoom_adj.clone();
+    // Set up the data once for better performance.
+    let graph_cache = instantiate_graph_cache(&data, &ui.units_widget, &x_zoom, &y_zoom);
     let map = ui.map.clone();
     let path_layer = ui.path_layer.clone();
     let marker_layer = ui.marker_layer.clone();
@@ -1183,7 +1286,7 @@ fn update_map_graph_and_summary_widgets(
         marker_layer.unwrap(),
         startstop_layer.unwrap(),
     );
-    build_graphs(&data, &ui);
+    build_graphs(&data, &graph_cache, &ui);
     build_summary(&data, &ui);
     return shumate_marker_layer;
 }
