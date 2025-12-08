@@ -330,33 +330,18 @@ fn get_xy(
     if x.len() > y.len() && (x.len() != 0) && (y.len() != 0) {
         data_range = 0..y.len() - 1;
     }
+    // Doing this  in a single pass is less expensive.
     if (x.len() != 0) && (y.len() != 0) {
         for index in data_range.clone() {
             match x_field_name {
                 "distance" => {
                     x_user.push(cvt_distance(x[index] as f32, &user_unit));
                 }
-                "enhanced_speed" => {
-                    x_user.push(cvt_pace(x[index] as f32, &user_unit));
-                }
-                "enhanced_altitude" => {
-                    x_user.push(cvt_altitude(x[index] as f32, &user_unit));
-                }
-                "temperature" => {
-                    x_user.push(cvt_temperature(x[index] as f32, &user_unit));
-                }
                 _ => {
                     x_user.push(x[index] as f32);
                 }
             }
-        }
-    }
-    if (x.len() != 0) && (y.len() != 0) {
-        for index in data_range.clone() {
             match y_field_name {
-                "distance" => {
-                    y_user.push(cvt_distance(y[index] as f32, &user_unit));
-                }
                 "enhanced_speed" => {
                     y_user.push(cvt_pace(y[index] as f32, &user_unit));
                 }
