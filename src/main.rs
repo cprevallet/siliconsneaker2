@@ -132,7 +132,7 @@ fn get_sess_record_field(data: Vec<FitDataRecord>, field_name: &str) -> f64 {
                     }
                 }
             }
-            _ => (), // iatches other patterns
+            _ => (), // matches other patterns
         }
     }
     return f64::NAN;
@@ -185,7 +185,6 @@ fn extract_vector_f64(value: &Value) -> Vec<f64> {
 
 // Return a time for heart rate in the time_in_zone record.
 fn get_time_in_zone_field(data: &Vec<FitDataRecord>) -> (Option<Vec<f64>>, Option<Vec<f64>>) {
-    //fn get_time_in_zone_field(data: &Vec<FitDataRecord>) {
     let mut result: (Option<Vec<f64>>, Option<Vec<f64>>) = (None, None);
     for item in data {
         match item.kind() {
@@ -672,7 +671,6 @@ fn get_run_start_date(data: &Vec<FitDataRecord>) -> (i32, u32, u32) {
 
 // Return a (date dependent) unicode symbol.
 fn get_symbol(data: &Vec<FitDataRecord>) -> &str {
-    //    let mut symbol = "🏃";
     let mut symbol = concat!(r#"<span size="200%">"#, "🏃", "</span>");
     let (_year, month, day) = get_run_start_date(data);
     if month == 1 && day == 1 {
@@ -753,7 +751,6 @@ fn build_map(
         }
         map.add_overlay_layer(&path_layer);
         // add pins for the starting and stopping points of the run
-        // let startstop_layer = add_marker_layer_to_map(&map);
         startstop_layer.remove_all();
         let len = run_path.len();
         if len > 0 {
@@ -786,7 +783,6 @@ fn build_map(
         }
         map.add_overlay_layer(&startstop_layer);
         // Add a layer for indication of current position (aka the runner).
-        // let marker_layer = add_marker_layer_to_map(&map);
         marker_layer.remove_all();
         map.add_overlay_layer(&marker_layer);
         // You may want to set an initial center and zoom level.
@@ -1150,6 +1146,7 @@ struct UserInterface {
     da: DrawingArea,
 }
 
+// Instantiate the object holding the widgets (views).
 fn instantiate_ui(app: &Application) -> UserInterface {
     let mut ui = UserInterface {
         win: ApplicationWindow::builder()
@@ -1289,6 +1286,7 @@ fn instantiate_ui(app: &Application) -> UserInterface {
     ui.marker_layer = Some(add_marker_layer_to_map(&ui.map).unwrap());
     return ui;
 }
+
 // Create and present a modal MessageDialog when supplied a text string.
 fn show_error_dialog<W: IsA<gtk4::Window>>(parent: &W, text_str: String) {
     // Create the MessageDialog
@@ -1381,7 +1379,6 @@ fn build_gui(app: &Application) {
                                                 "File not found.".to_string(),
                                             );
                                             return;
-                                            // panic!("File not found.");
                                         }
                                         _ => {
                                             show_error_dialog(
@@ -1389,7 +1386,6 @@ fn build_gui(app: &Application) {
                                                 "Error unknown. Permissions?".to_string(),
                                             );
                                             return;
-                                            // panic!("Hmmm...unknown error. Check file permissions?");
                                         }
                                     },
                                 };
