@@ -47,10 +47,6 @@ struct GraphCache {
     distance_temperature: GraphAttributes,
 }
 
-struct MapCache {
-    run_path: Vec<(f32, f32)>,
-}
-
 // Program entry point.
 fn main() {
     let app = Application::builder().build();
@@ -689,7 +685,7 @@ fn update_marker_layer(data: &Vec<FitDataRecord>, ui: &UserInterface, curr_pos: 
 }
 
 // Build the map.
-fn build_map(data: &Vec<FitDataRecord>, ui: &UserInterface) {
+fn build_map(data: &Vec<FitDataRecord>, ui: &UserInterface, mc: &MapCache) {
     if libshumate::MapSourceRegistry::with_defaults()
         .by_id("osm-mapnik")
         .is_some()
@@ -700,7 +696,7 @@ fn build_map(data: &Vec<FitDataRecord>, ui: &UserInterface) {
         ui.map.set_map_source(Some(&source));
         // Get values from fit file.
         let units_widget = DropDown::builder().build(); // bogus value - no units required for position
-        let run_path = get_xy(&data, &units_widget, "position_lat", "position_long");
+        let run_path = &mc.run_path;
         ui.path_layer.as_ref().unwrap().remove_all();
         for (lat, lon) in run_path.clone() {
             let coord = Coordinate::new_full(semi_to_degrees(lat), semi_to_degrees(lon));
@@ -1178,17 +1174,21 @@ fn instantiate_graph_cache(d: &Vec<FitDataRecord>, ui: &UserInterface) -> GraphC
 }
 
 // Update the views when supplied with data.
-fn update_map_graph_and_summary_widgets(ui: &UserInterface, data: &Vec<FitDataRecord>) {
-    build_map(&data, &ui);
+fn update_map_graph_and_summary_widgets(
+    ui: &UserInterface,
+    data: &Vec<FitDataRecord>,
+    mc: &MapCache,
+) {
+    build_map(&data, &ui, &mc);
     build_graphs(&data, &ui);
     build_summary(&data, &ui);
     return;
 }
 
 // After reading the fit file, display the additional views of the UI.
-fn display_run(ui: &UserInterface, data: &Vec<FitDataRecord>) {
+fn display_run(ui: &UserInterface, data: &Vec<FitDataRecord>, mc: &MapCache) {
     // 1. Instantiate embedded widgets based on parsed fit data.
-    update_map_graph_and_summary_widgets(&ui, &data);
+    update_map_graph_and_summary_widgets(&ui, &data, &mc);
 
     // 2. Connect embedded widgets to their parents.
     ui.da_window.set_child(Some(&ui.da));
@@ -1418,6 +1418,16 @@ fn show_error_dialog<W: IsA<gtk4::Window>>(parent: &W, text_str: String) {
     // Display the dialog.
     dialog.present();
 }
+struct MapCache {
+    run_path: Vec<(f32, f32)>,
+}
+// Instantiate a means to only capture the data in run_path a *SINGLE* time.
+fn instantiate_map_cache(d: &Vec<FitDataRecord>) -> MapCache {
+    let units_widget = DropDown::builder().build(); // bogus value - no units required for position
+    let run_path = get_xy(&d, &units_widget, "position_lat", "position_long");
+    let mc: MapCache = MapCache { run_path: run_path };
+    return mc;
+}
 
 // Instantiate the user-interface views and handle callbacks.
 fn build_gui(app: &Application) {
@@ -1496,16 +1506,27 @@ fn build_gui(app: &Application) {
                                     },
                                 };
                                 if let Ok(data) = fitparser::from_reader(&mut file) {
-                                    display_run(&ui2, &data);
+                                    // Create a map cache.
+                                    let map_cache = instantiate_map_cache(&data);
+                                    // Wrap the MapCache in an Rc for shared ownership.
+                                    let mc_rc = Rc::new(map_cache);
+                                    // Clone the Rc pointer for each independent closure that needs the data.
+                                    let mc_rc_for_marker = Rc::clone(&mc_rc);
+                                    let mc_rc_for_units = Rc::clone(&mc_rc);
+
+                                    display_run(&ui2, &data, &mc_rc);
                                     // Hook-up the units_widget change handler.
                                     let data_clone = data.clone();
-
                                     // update everything when the unit system changes.
                                     ui2.units_widget.connect_selected_notify(clone!(
                                         #[strong]
                                         ui2,
                                         move |_| {
-                                            update_map_graph_and_summary_widgets(&ui2, &data_clone);
+                                            update_map_graph_and_summary_widgets(
+                                                &ui2,
+                                                &data_clone,
+                                                &mc_rc_for_units,
+                                            );
                                         },
                                     ));
 
@@ -1534,6 +1555,8 @@ fn build_gui(app: &Application) {
                                             ui2,
                                             #[strong]
                                             curr_pos,
+                                            #[strong]
+                                            mc_rc_for_marker,
                                             move |_| {
                                                 // Update graphs.
                                                 da2.queue_draw();
