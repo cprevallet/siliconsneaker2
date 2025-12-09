@@ -620,9 +620,7 @@ fn build_graphs(data: &Vec<FitDataRecord>, ui: &UserInterface) {
     let units_clone = units_widget.clone();
 
     // Set up the data once for better performance.
-    let zoom_x: f32 = x_zoom.value() as f32;
-    let zoom_y: f32 = y_zoom.value() as f32;
-    let graph_cache = instantiate_graph_cache(&data, &ui, zoom_x, zoom_y); // // Create a new reference count for the structure.
+    let graph_cache = instantiate_graph_cache(&data, &ui); // // Create a new reference count for the structure.
     let gc_rc = Rc::new(graph_cache);
     let gc1 = Rc::clone(&gc_rc);
 
@@ -1120,13 +1118,11 @@ struct GraphCache {
 }
 
 // Calculate a cache of the graph attributes for display.
-fn instantiate_graph_cache(
-    d: &Vec<FitDataRecord>,
-    ui: &UserInterface,
-    zoom_x: f32,
-    zoom_y: f32,
-) -> GraphCache {
+fn instantiate_graph_cache(d: &Vec<FitDataRecord>, ui: &UserInterface) -> GraphCache {
     let user_unit = get_unit_system(&ui.units_widget);
+
+    let zoom_x: f32 = ui.x_zoom_adj.value() as f32;
+    let zoom_y: f32 = ui.y_zoom_adj.value() as f32;
     let num_formatter = |x: &f32| format!("{:7.2}", x);
     let pace_formatter = |x: &f32| {
         let mins = x.trunc();
@@ -1618,9 +1614,15 @@ fn build_gui(app: &Application) {
 
                                     // redraw the drawing area when the zoom changes.
                                     let da = ui2.da.clone();
-                                    ui2.y_zoom_scale
-                                        .adjustment()
-                                        .connect_value_changed(move |_| da.queue_draw());
+                                    let data_clone2 = data.clone();
+                                    ui2.y_zoom_scale.adjustment().connect_value_changed(clone!(
+                                        #[strong]
+                                        ui2,
+                                        move |_| {
+                                            build_graphs(&data_clone2, &ui2);
+                                            da.queue_draw();
+                                        },
+                                    ));
 
                                     // redraw the drawing area and map when the current position changes.
                                     let curr_pos = ui2.curr_pos_adj.clone();
