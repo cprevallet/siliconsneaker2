@@ -29,6 +29,28 @@ enum Units {
     None,
 }
 
+struct GraphAttributes {
+    plotvals: Vec<(f32, f32)>,
+    caption: String,
+    xlabel: String,
+    ylabel: String,
+    plot_range: (std::ops::Range<f32>, std::ops::Range<f32>),
+    y_formatter: Box<dyn Fn(&f32) -> String>,
+    // color: RGBColor,
+}
+
+struct GraphCache {
+    distance_pace: GraphAttributes,
+    distance_heart_rate: GraphAttributes,
+    distance_cadence: GraphAttributes,
+    distance_elevation: GraphAttributes,
+    distance_temperature: GraphAttributes,
+}
+
+struct MapCache {
+    run_path: Vec<(f32, f32)>,
+}
+
 // Program entry point.
 fn main() {
     let app = Application::builder().build();
@@ -121,8 +143,8 @@ fn set_plot_range(
 }
 
 // Return a session values of "field_name".
-fn get_sess_record_field(data: Vec<FitDataRecord>, field_name: &str) -> f64 {
-    for item in &data {
+fn get_sess_record_field(data: &Vec<FitDataRecord>, field_name: &str) -> f64 {
+    for item in data {
         match item.kind() {
             // Individual msgnum::records
             MesgNum::Session => {
@@ -730,10 +752,10 @@ fn build_map(data: &Vec<FitDataRecord>, ui: &UserInterface) {
         // You may want to set an initial center and zoom level.
         if ui.map.viewport().is_some() {
             let viewport = ui.map.viewport().unwrap();
-            let nec_lat = get_sess_record_field(data.clone(), "nec_lat");
-            let nec_long = get_sess_record_field(data.clone(), "nec_long");
-            let swc_lat = get_sess_record_field(data.clone(), "swc_lat");
-            let swc_long = get_sess_record_field(data.clone(), "swc_long");
+            let nec_lat = get_sess_record_field(&data, "nec_lat");
+            let nec_long = get_sess_record_field(&data, "nec_long");
+            let swc_lat = get_sess_record_field(&data, "swc_lat");
+            let swc_long = get_sess_record_field(&data, "swc_long");
             if !nec_lat.is_nan() & !nec_long.is_nan() & !swc_lat.is_nan() & !swc_long.is_nan() {
                 let center_lat =
                     (semi_to_degrees(nec_lat as f32) + semi_to_degrees(swc_lat as f32)) / 2.0;
@@ -999,24 +1021,6 @@ fn build_summary(data: &Vec<FitDataRecord>, ui: &UserInterface) {
         }
         ui.text_buffer.insert(&mut end, "\n");
     };
-}
-
-struct GraphAttributes {
-    plotvals: Vec<(f32, f32)>,
-    caption: String,
-    xlabel: String,
-    ylabel: String,
-    plot_range: (std::ops::Range<f32>, std::ops::Range<f32>),
-    y_formatter: Box<dyn Fn(&f32) -> String>,
-    // color: RGBColor,
-}
-
-struct GraphCache {
-    distance_pace: GraphAttributes,
-    distance_heart_rate: GraphAttributes,
-    distance_cadence: GraphAttributes,
-    distance_elevation: GraphAttributes,
-    distance_temperature: GraphAttributes,
 }
 
 // Calculate a cache of the graph attributes (see GraphAtributes) for display.
