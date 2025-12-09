@@ -396,13 +396,14 @@ fn draw_graphs(
             };
             // plotvals = get_xy(&d, &units_widget, "distance", "enhanced_speed");
             build_individual_graph(
-                gc.distance_pace.plotvals,
-                gc.distance_pace.caption,
-                gc.distance_pace.xlabel,
-                gc.distance_pace.ylabel,
-                gc.distance_pace.plot_range,
-                gc.distance_pace.y_formatter,
-                gc.distance_pace.color,
+                &gc.distance_pace.plotvals,
+                gc.distance_pace.caption.as_str(),
+                gc.distance_pace.xlabel.as_str(),
+                gc.distance_pace.ylabel.as_str(),
+                &gc.distance_pace.plot_range,
+                &gc.distance_pace.y_formatter,
+                // gc.distance_pace.color,
+                &RED,
                 curr_adj,
                 a,
             );
@@ -427,9 +428,9 @@ fn draw_graphs(
         }
         if idx == 2 {
             // plotvals = get_xy(&d, &units_widget, "distance", "heart_rate");
-            if plotvals.len() == 0 {
-                continue;
-            }
+            // if plotvals.len() == 0 {
+            //     continue;
+            // }
             // plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
             // y_formatter = Box::new(num_formatter);
             // caption = "Heart rate";
@@ -451,9 +452,9 @@ fn draw_graphs(
         }
         if idx == 3 {
             // plotvals = get_xy(&d, &units_widget, "distance", "cadence");
-            if plotvals.len() == 0 {
-                continue;
-            }
+            // if plotvals.len() == 0 {
+            //     continue;
+            // }
             // plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
             // y_formatter = Box::new(num_formatter);
             // caption = "Cadence";
@@ -475,9 +476,9 @@ fn draw_graphs(
         }
         if idx == 4 {
             // plotvals = get_xy(&d, &units_widget, "distance", "enhanced_altitude");
-            if plotvals.len() == 0 {
-                continue;
-            }
+            // if plotvals.len() == 0 {
+            //     continue;
+            // }
             // plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
             // y_formatter = Box::new(num_formatter);
             // caption = "Elevation";
@@ -499,9 +500,9 @@ fn draw_graphs(
         }
         if idx == 5 {
             // plotvals = get_xy(&d, &units_widget, "distance", "temperature");
-            if plotvals.len() == 0 {
-                continue;
-            }
+            // if plotvals.len() == 0 {
+            //     continue;
+            // }
             // plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
             // y_formatter = Box::new(num_formatter);
             // caption = "Temperature";
@@ -531,15 +532,15 @@ fn draw_graphs(
 }
 
 fn build_individual_graph(
-    plotvals: Vec<(f32, f32)>,
+    plotvals: &Vec<(f32, f32)>,
     caption: &str,
     xlabel: &str,
     ylabel: &str,
-    plot_range: (std::ops::Range<f32>, std::ops::Range<f32>),
-    y_formatter: Box<dyn Fn(&f32) -> String>,
+    plot_range: &(std::ops::Range<f32>, std::ops::Range<f32>),
+    y_formatter: &Box<dyn Fn(&f32) -> String>,
     color: &RGBColor,
     curr_adj: &Adjustment,
-    a: &plotters::drawing::DrawingArea<CairoBackend<'_>, Shift>,
+    a: &plotters::drawing::DrawingArea<CairoBackend<'_>, plotters::coord::Shift>,
 ) {
     let mut chart = ChartBuilder::on(&a)
         // Set the caption of the chart
@@ -607,22 +608,31 @@ fn build_individual_graph(
 }
 
 // Build drawing area.
-fn build_graphs(data: &Vec<FitDataRecord>, graph_cache: &GraphCache, ui: &UserInterface) {
+fn build_graphs(data: &Vec<FitDataRecord>, ui: &UserInterface) {
     //    let drawing_area: DrawingArea = DrawingArea::builder().build();
     // Need to clone to use inside the closure.
     let d = data.clone();
-    let gc = graph_cache.clone();
     let units_widget = ui.units_widget.clone();
     let y_zoom = ui.y_zoom_adj.clone();
     let x_zoom = ui.x_zoom_adj.clone();
     let curr_pos = ui.curr_pos_adj.clone();
     curr_pos.set_value(0.001);
     let units_clone = units_widget.clone();
-    ui.da
-        .set_draw_func(move |_drawing_area, cr, width, height| {
+
+    // Set up the data once for better performance.
+    let zoom_x: f32 = x_zoom.value() as f32;
+    let zoom_y: f32 = y_zoom.value() as f32;
+    let graph_cache = instantiate_graph_cache(&data, &ui, zoom_x, zoom_y); // // Create a new reference count for the structure.
+    let gc_rc = Rc::new(graph_cache);
+    let gc1 = Rc::clone(&gc_rc);
+
+    ui.da.set_draw_func(clone!(
+        #[strong]
+        gc1,
+        move |_drawing_area, cr, width, height| {
             draw_graphs(
                 &d,
-                &gc,
+                &gc1,
                 &units_clone,
                 &x_zoom,
                 &y_zoom,
@@ -631,7 +641,8 @@ fn build_graphs(data: &Vec<FitDataRecord>, graph_cache: &GraphCache, ui: &UserIn
                 width as f64,
                 height as f64,
             );
-        });
+        }
+    ));
 }
 
 // Add a marker layer to the map.
@@ -1090,34 +1101,32 @@ fn build_summary(data: &Vec<FitDataRecord>, ui: &UserInterface) {
     };
 }
 
-struct GraphAttributes<'a> {
+struct GraphAttributes {
     plotvals: Vec<(f32, f32)>,
-    caption: &'a str,
-    xlabel: &'a str,
-    ylabel: &'a str,
+    caption: String,
+    xlabel: String,
+    ylabel: String,
     plot_range: (std::ops::Range<f32>, std::ops::Range<f32>),
     y_formatter: Box<dyn Fn(&f32) -> String>,
-    color: &'a RGBColor,
+    // color: RGBColor,
 }
 
-struct GraphCache<'a> {
-    distance_pace: GraphAttributes<'a>,
-    distance_heart_rate: GraphAttributes<'a>,
-    distance_cadence: GraphAttributes<'a>,
-    distance_elevation: GraphAttributes<'a>,
-    distance_temperature: GraphAttributes<'a>,
+struct GraphCache {
+    distance_pace: GraphAttributes,
+    distance_heart_rate: GraphAttributes,
+    distance_cadence: GraphAttributes,
+    distance_elevation: GraphAttributes,
+    distance_temperature: GraphAttributes,
 }
 
 // Calculate a cache of the graph attributes for display.
-fn instantiate_graph_cache<'a>(
-    d: &'a Vec<FitDataRecord>,
-    units_widget: &'a DropDown,
-    xzm: &'a Adjustment,
-    yzm: &'a Adjustment,
-) -> GraphCache<'a> {
-    let zoom_x: f32 = xzm.value() as f32;
-    let zoom_y: f32 = yzm.value() as f32;
-    let user_unit = get_unit_system(units_widget);
+fn instantiate_graph_cache(
+    d: &Vec<FitDataRecord>,
+    ui: &UserInterface,
+    zoom_x: f32,
+    zoom_y: f32,
+) -> GraphCache {
+    let user_unit = get_unit_system(&ui.units_widget);
     let num_formatter = |x: &f32| format!("{:7.2}", x);
     let pace_formatter = |x: &f32| {
         let mins = x.trunc();
@@ -1127,7 +1136,7 @@ fn instantiate_graph_cache<'a>(
     let mut xlabel: &str = "";
     let mut ylabel: &str = "";
     // distance_pace
-    let xy = get_xy(&d, &units_widget, "distance", "enhanced_speed");
+    let xy = get_xy(&d, &ui.units_widget, "distance", "enhanced_speed");
     let range = set_plot_range(&xy.clone(), zoom_x, zoom_y);
     match user_unit {
         Units::US => {
@@ -1145,15 +1154,15 @@ fn instantiate_graph_cache<'a>(
     }
     let distance_pace = GraphAttributes {
         plotvals: (xy),
-        caption: ("Pace"),
-        xlabel: (xlabel),
-        ylabel: (ylabel),
+        caption: (String::from("Pace")),
+        xlabel: (String::from(xlabel)),
+        ylabel: (String::from(ylabel)),
         plot_range: (range),
         y_formatter: (Box::new(pace_formatter)),
-        color: (&RED),
+        // color: (&RED),
     };
     // distance_heart_rate
-    let xy = get_xy(&d, &units_widget, "distance", "heart_rate");
+    let xy = get_xy(&d, &ui.units_widget, "distance", "heart_rate");
     let range = set_plot_range(&xy.clone(), zoom_x, zoom_y);
     match user_unit {
         Units::US => {
@@ -1171,15 +1180,15 @@ fn instantiate_graph_cache<'a>(
     }
     let distance_heart_rate = GraphAttributes {
         plotvals: (xy),
-        caption: ("Heart rate"),
-        xlabel: (xlabel),
-        ylabel: (ylabel),
+        caption: (String::from("Heart rate")),
+        xlabel: (String::from(xlabel)),
+        ylabel: (String::from(ylabel)),
         plot_range: (range),
         y_formatter: (Box::new(num_formatter)),
-        color: (&BLUE),
+        // color: (&BLUE),
     };
     // distance-cadence
-    let xy = get_xy(&d, &units_widget, "distance", "cadence");
+    let xy = get_xy(&d, &ui.units_widget, "distance", "cadence");
     let range = set_plot_range(&xy.clone(), zoom_x, zoom_y);
     match user_unit {
         Units::US => {
@@ -1197,15 +1206,15 @@ fn instantiate_graph_cache<'a>(
     }
     let distance_cadence = GraphAttributes {
         plotvals: (xy),
-        caption: ("Cadence"),
-        xlabel: (xlabel),
-        ylabel: (ylabel),
+        caption: (String::from("Cadence")),
+        xlabel: (String::from(xlabel)),
+        ylabel: (String::from(ylabel)),
         plot_range: (range),
         y_formatter: (Box::new(num_formatter)),
-        color: (&CYAN),
+        // color: (&CYAN),
     };
     //distance-elevation
-    let xy = get_xy(&d, &units_widget, "distance", "enhanced_altitude");
+    let xy = get_xy(&d, &ui.units_widget, "distance", "enhanced_altitude");
     let range = set_plot_range(&xy.clone(), zoom_x, zoom_y);
     match user_unit {
         Units::US => {
@@ -1223,15 +1232,15 @@ fn instantiate_graph_cache<'a>(
     }
     let distance_elevation = GraphAttributes {
         plotvals: (xy),
-        caption: ("Elevation"),
-        xlabel: (xlabel),
-        ylabel: (ylabel),
+        caption: (String::from("Elevation")),
+        xlabel: (String::from(xlabel)),
+        ylabel: (String::from(ylabel)),
         plot_range: (range),
         y_formatter: (Box::new(num_formatter)),
-        color: (&RED),
+        // color: (&RED),
     };
     // distance-temperature
-    let xy = get_xy(&d, &units_widget, "distance", "temperature");
+    let xy = get_xy(&d, &ui.units_widget, "distance", "temperature");
     let range = set_plot_range(&xy.clone(), zoom_x, zoom_y);
     match user_unit {
         Units::US => {
@@ -1249,12 +1258,12 @@ fn instantiate_graph_cache<'a>(
     }
     let distance_temperature = GraphAttributes {
         plotvals: (xy),
-        caption: ("Temperature"),
-        xlabel: (xlabel),
-        ylabel: (ylabel),
+        caption: (String::from("Temperature")),
+        xlabel: (String::from(xlabel)),
+        ylabel: (String::from(ylabel)),
         plot_range: (range),
         y_formatter: (Box::new(num_formatter)),
-        color: (&BROWN),
+        // color: (&BROWN),
     };
     let gc: GraphCache = GraphCache {
         distance_pace: distance_pace,
@@ -1271,10 +1280,6 @@ fn update_map_graph_and_summary_widgets(
     ui: &UserInterface,
     data: &Vec<FitDataRecord>,
 ) -> Option<MarkerLayer> {
-    let y_zoom = ui.y_zoom_adj.clone();
-    let x_zoom = ui.x_zoom_adj.clone();
-    // Set up the data once for better performance.
-    let graph_cache = instantiate_graph_cache(&data, &ui.units_widget, &x_zoom, &y_zoom);
     let map = ui.map.clone();
     let path_layer = ui.path_layer.clone();
     let marker_layer = ui.marker_layer.clone();
@@ -1286,7 +1291,7 @@ fn update_map_graph_and_summary_widgets(
         marker_layer.unwrap(),
         startstop_layer.unwrap(),
     );
-    build_graphs(&data, &graph_cache, &ui);
+    build_graphs(&data, &ui);
     build_summary(&data, &ui);
     return shumate_marker_layer;
 }
