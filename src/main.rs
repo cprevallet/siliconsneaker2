@@ -354,9 +354,6 @@ fn get_xy(
 
 // Use plotters.rs to draw a graph on the drawing area.
 fn draw_graphs(gc: &GraphCache, curr_adj: &Adjustment, cr: &Context, width: f64, height: f64) {
-    // let zoom_x: f32 = xzm.value() as f32;
-    // let zoom_y: f32 = yzm.value() as f32;
-    // let user_unit = get_unit_system(units_widget);
     // --- 🎨 Custom Drawing Logic Starts Here ---
     let root = plotters_cairo::CairoBackend::new(&cr, (width as u32, height as u32))
         .unwrap()
@@ -532,7 +529,8 @@ fn build_individual_graph(
     }
 }
 
-// Build drawing area.
+// Build the graphs.  Prepare the graphical data for the drawing area and
+// set-up the draw function callback.
 fn build_graphs(data: &Vec<FitDataRecord>, ui: &UserInterface) {
     // Need to clone to use inside the closure.
     let curr_pos = ui.curr_pos_adj.clone();
@@ -560,7 +558,7 @@ fn add_marker_layer_to_map(map: &SimpleMap) -> Option<MarkerLayer> {
     return None;
 }
 
-//Adds a PathLayer with a path of given coordinates to the map.
+// Adds a PathLayer with a path of given coordinates to the map.
 fn add_path_layer_to_map(map: &SimpleMap) -> Option<PathLayer> {
     if map.viewport().is_some() {
         let viewport = map.viewport().unwrap();
