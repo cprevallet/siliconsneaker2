@@ -1566,7 +1566,14 @@ fn build_gui(app: &Application) {
                                                 &mc_rc_for_units,
                                                 &gc_rc_for_units,
                                             );
-                                            ui2.map.queue_draw();
+                                            let curr_pos = ui2.curr_pos_adj.clone();
+                                            update_marker_layer(
+                                                &data,
+                                                &ui2,
+                                                &curr_pos,
+                                                &mc_rc_for_units,
+                                            );
+                                            // ui2.map.queue_draw();
                                             ui2.da.queue_draw();
                                         },
                                     ));
