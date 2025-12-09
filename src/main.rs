@@ -100,7 +100,7 @@ fn set_plot_range(
     zoom_y: f32,
 ) -> (std::ops::Range<f32>, std::ops::Range<f32>) {
     if data.len() == 0 {
-        panic!("Can't calculate range. No values supplied.")
+        return (0.0..0.0, 0.0..0.0);
     };
     if (zoom_x < 0.01) | (zoom_y < 0.01) {
         panic!("Invalid zoom.")
@@ -353,17 +353,7 @@ fn get_xy(
 }
 
 // Use plotters.rs to draw a graph on the drawing area.
-fn draw_graphs(
-    d: &Vec<FitDataRecord>,
-    gc: &GraphCache,
-    units_widget: &DropDown,
-    xzm: &Adjustment,
-    yzm: &Adjustment,
-    curr_adj: &Adjustment,
-    cr: &Context,
-    width: f64,
-    height: f64,
-) {
+fn draw_graphs(gc: &GraphCache, curr_adj: &Adjustment, cr: &Context, width: f64, height: f64) {
     // let zoom_x: f32 = xzm.value() as f32;
     // let zoom_y: f32 = yzm.value() as f32;
     // let user_unit = get_unit_system(units_widget);
@@ -374,27 +364,12 @@ fn draw_graphs(
     let _ = root.fill(&WHITE);
     let areas = root.split_evenly((2, 3));
     // Declare and initialize.
-    let num_formatter = |x: &f32| format!("{:7.2}", x);
-    // let pace_formatter = |x: &f32| {
-    //     let mins = x.trunc();
-    //     let secs = x.fract() * 60.0;
-    //     format!("{:02.0}:{:02.0}", mins, secs)
-    // };
-    // let mut plotvals: Vec<(f32, f32)> = Vec::new();
-    // let mut caption: &str = "";
-    // let mut xlabel: &str = "";
-    // let mut ylabel: &str = "";
-    // let mut plot_range: (std::ops::Range<f32>, std::ops::Range<f32>) = (0_f32..1_f32, 0_f32..1_f32);
-    // let mut y_formatter: Box<dyn Fn(&f32) -> String> = Box::new(num_formatter);
-    // let mut color = &RED;
     for (a, idx) in areas.iter().zip(1..) {
-        //let root = root.margin(50, 50, 50, 50);
         // After this point, we should be able to construct a chart context
         if idx == 1 {
             if gc.distance_pace.plotvals.len() == 0 {
                 continue;
             };
-            // plotvals = get_xy(&d, &units_widget, "distance", "enhanced_speed");
             build_individual_graph(
                 &gc.distance_pace.plotvals,
                 gc.distance_pace.caption.as_str(),
@@ -402,125 +377,74 @@ fn draw_graphs(
                 gc.distance_pace.ylabel.as_str(),
                 &gc.distance_pace.plot_range,
                 &gc.distance_pace.y_formatter,
-                // gc.distance_pace.color,
-                &RED,
+                &GREEN,
                 curr_adj,
                 a,
             );
-            // plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
-            // y_formatter = Box::new(pace_formatter);
-            // caption = "Pace";
-            // match user_unit {
-            //     Units::US => {
-            //         ylabel = "Pace(min/mile)";
-            //         xlabel = "Distance(miles)";
-            //     }
-            //     Units::Metric => {
-            //         ylabel = "Pace(min/km)";
-            //         xlabel = "Distance(km)";
-            //     }
-            //     Units::None => {
-            //         ylabel = "";
-            //         xlabel = "";
-            //     }
-            // }
-            // color = &GREEN;
         }
         if idx == 2 {
-            // plotvals = get_xy(&d, &units_widget, "distance", "heart_rate");
-            // if plotvals.len() == 0 {
-            //     continue;
-            // }
-            // plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
-            // y_formatter = Box::new(num_formatter);
-            // caption = "Heart rate";
-            // match user_unit {
-            //     Units::US => {
-            //         ylabel = "Heart rate(bpm)";
-            //         xlabel = "Distance(miles)";
-            //     }
-            //     Units::Metric => {
-            //         ylabel = "Heart rate(bpm)";
-            //         xlabel = "Distance(km)";
-            //     }
-            //     Units::None => {
-            //         ylabel = "";
-            //         xlabel = "";
-            //     }
-            // }
-            // color = &BLUE;
+            if gc.distance_heart_rate.plotvals.len() == 0 {
+                continue;
+            };
+            build_individual_graph(
+                &gc.distance_heart_rate.plotvals,
+                gc.distance_heart_rate.caption.as_str(),
+                gc.distance_heart_rate.xlabel.as_str(),
+                gc.distance_heart_rate.ylabel.as_str(),
+                &gc.distance_heart_rate.plot_range,
+                &gc.distance_heart_rate.y_formatter,
+                &BLUE,
+                curr_adj,
+                a,
+            )
         }
         if idx == 3 {
-            // plotvals = get_xy(&d, &units_widget, "distance", "cadence");
-            // if plotvals.len() == 0 {
-            //     continue;
-            // }
-            // plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
-            // y_formatter = Box::new(num_formatter);
-            // caption = "Cadence";
-            // match user_unit {
-            //     Units::US => {
-            //         ylabel = "Cadence";
-            //         xlabel = "Distance(miles)";
-            //     }
-            //     Units::Metric => {
-            //         ylabel = "Cadence";
-            //         xlabel = "Distance(km)";
-            //     }
-            //     Units::None => {
-            //         ylabel = "";
-            //         xlabel = "";
-            //     }
-            // }
-            // color = &CYAN;
+            if gc.distance_cadence.plotvals.len() == 0 {
+                continue;
+            };
+            build_individual_graph(
+                &gc.distance_cadence.plotvals,
+                gc.distance_cadence.caption.as_str(),
+                gc.distance_cadence.xlabel.as_str(),
+                gc.distance_cadence.ylabel.as_str(),
+                &gc.distance_cadence.plot_range,
+                &gc.distance_cadence.y_formatter,
+                &CYAN,
+                curr_adj,
+                a,
+            )
         }
         if idx == 4 {
-            // plotvals = get_xy(&d, &units_widget, "distance", "enhanced_altitude");
-            // if plotvals.len() == 0 {
-            //     continue;
-            // }
-            // plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
-            // y_formatter = Box::new(num_formatter);
-            // caption = "Elevation";
-            // match user_unit {
-            //     Units::US => {
-            //         ylabel = "Elevation(feet)";
-            //         xlabel = "Distance(miles)";
-            //     }
-            //     Units::Metric => {
-            //         ylabel = "Elevation(m)";
-            //         xlabel = "Distance(km)";
-            //     }
-            //     Units::None => {
-            //         ylabel = "";
-            //         xlabel = "";
-            //     }
-            // }
-            // color = &RED;
+            if gc.distance_elevation.plotvals.len() == 0 {
+                continue;
+            };
+            build_individual_graph(
+                &gc.distance_elevation.plotvals,
+                gc.distance_elevation.caption.as_str(),
+                gc.distance_elevation.xlabel.as_str(),
+                gc.distance_elevation.ylabel.as_str(),
+                &gc.distance_elevation.plot_range,
+                &gc.distance_elevation.y_formatter,
+                &RED,
+                curr_adj,
+                a,
+            )
         }
         if idx == 5 {
-            // plotvals = get_xy(&d, &units_widget, "distance", "temperature");
-            // if plotvals.len() == 0 {
-            //     continue;
-            // }
-            // plot_range = set_plot_range(&plotvals.clone(), zoom_x, zoom_y);
-            // y_formatter = Box::new(num_formatter);
-            // caption = "Temperature";
-            // match user_unit {
-            //     Units::US => {
-            //         ylabel = "Temperature(°F)";
-            //         xlabel = "Distance(miles)";
-            //     }
-            //     Units::Metric => {
-            //         ylabel = "Temperature(°C)";
-            //         xlabel = "Distance(km)";
-            //     }
-            //     Units::None => {
-            //         ylabel = "";
-            //         xlabel = "";
-            //     }
-            // }
-            // color = &BROWN;
+            if gc.distance_temperature.plotvals.len() == 0 {
+                continue;
+            };
+            build_individual_graph(
+                &gc.distance_temperature.plotvals,
+                gc.distance_temperature.caption.as_str(),
+                gc.distance_temperature.xlabel.as_str(),
+                gc.distance_temperature.ylabel.as_str(),
+                &gc.distance_temperature.plot_range,
+                &gc.distance_temperature.y_formatter,
+                &BROWN,
+                curr_adj,
+                a,
+            )
         }
         if idx == 6 {
             break;
@@ -531,6 +455,7 @@ fn draw_graphs(
     // --- Custom Drawing Logic Ends Here ---
 }
 
+// Use plotters to actually draw a graph.
 fn build_individual_graph(
     plotvals: &Vec<(f32, f32)>,
     caption: &str,
@@ -609,36 +534,17 @@ fn build_individual_graph(
 
 // Build drawing area.
 fn build_graphs(data: &Vec<FitDataRecord>, ui: &UserInterface) {
-    //    let drawing_area: DrawingArea = DrawingArea::builder().build();
     // Need to clone to use inside the closure.
-    let d = data.clone();
-    let units_widget = ui.units_widget.clone();
-    let y_zoom = ui.y_zoom_adj.clone();
-    let x_zoom = ui.x_zoom_adj.clone();
     let curr_pos = ui.curr_pos_adj.clone();
     curr_pos.set_value(0.001);
-    let units_clone = units_widget.clone();
-
-    // Set up the data once for better performance.
-    let graph_cache = instantiate_graph_cache(&data, &ui); // // Create a new reference count for the structure.
+    let graph_cache = instantiate_graph_cache(&data, &ui);
     let gc_rc = Rc::new(graph_cache);
     let gc1 = Rc::clone(&gc_rc);
-
     ui.da.set_draw_func(clone!(
         #[strong]
         gc1,
         move |_drawing_area, cr, width, height| {
-            draw_graphs(
-                &d,
-                &gc1,
-                &units_clone,
-                &x_zoom,
-                &y_zoom,
-                &curr_pos,
-                cr,
-                width as f64,
-                height as f64,
-            );
+            draw_graphs(&gc1, &curr_pos, cr, width as f64, height as f64);
         }
     ));
 }
@@ -1117,7 +1023,7 @@ struct GraphCache {
     distance_temperature: GraphAttributes,
 }
 
-// Calculate a cache of the graph attributes for display.
+// Calculate a cache of the graph attributes (see GraphAtributes) for display.
 fn instantiate_graph_cache(d: &Vec<FitDataRecord>, ui: &UserInterface) -> GraphCache {
     let user_unit = get_unit_system(&ui.units_widget);
 
@@ -1129,8 +1035,8 @@ fn instantiate_graph_cache(d: &Vec<FitDataRecord>, ui: &UserInterface) -> GraphC
         let secs = x.fract() * 60.0;
         format!("{:02.0}:{:02.0}", mins, secs)
     };
-    let mut xlabel: &str = "";
-    let mut ylabel: &str = "";
+    let mut xlabel: &str;
+    let mut ylabel: &str;
     // distance_pace
     let xy = get_xy(&d, &ui.units_widget, "distance", "enhanced_speed");
     let range = set_plot_range(&xy.clone(), zoom_x, zoom_y);
