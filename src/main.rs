@@ -1296,7 +1296,12 @@ fn instantiate_ui(app: &Application) -> UserInterface {
             .height_request(30)
             .width_request(50)
             .build(),
-        text_view: TextView::builder().monospace(true).editable(false).build(),
+        text_view: TextView::builder()
+            .monospace(true)
+            .editable(false)
+            .left_margin(25)
+            .right_margin(25)
+            .build(),
         text_buffer: TextBuffer::builder().build(),
         frame_left: Frame::builder().margin_bottom(5).build(),
         frame_right: Frame::builder().build(),
