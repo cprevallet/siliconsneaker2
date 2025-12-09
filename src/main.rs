@@ -668,13 +668,7 @@ fn update_marker_layer(data: &Vec<FitDataRecord>, layer: &MarkerLayer, curr_pos:
 }
 
 // Build the map.
-fn build_map(
-    data: &Vec<FitDataRecord>,
-    map: SimpleMap,
-    path_layer: PathLayer,
-    marker_layer: MarkerLayer,
-    startstop_layer: MarkerLayer,
-) -> Option<MarkerLayer> {
+fn build_map(data: &Vec<FitDataRecord>, ui: &UserInterface) {
     if libshumate::MapSourceRegistry::with_defaults()
         .by_id("osm-mapnik")
         .is_some()
@@ -682,18 +676,18 @@ fn build_map(
         let source = libshumate::MapSourceRegistry::with_defaults()
             .by_id("osm-mapnik")
             .unwrap();
-        map.set_map_source(Some(&source));
+        ui.map.set_map_source(Some(&source));
         // Get values from fit file.
         let units_widget = DropDown::builder().build(); // bogus value - no units required for position
         let run_path = get_xy(&data, &units_widget, "position_lat", "position_long");
-        path_layer.remove_all();
+        ui.path_layer.as_ref().unwrap().remove_all();
         for (lat, lon) in run_path.clone() {
             let coord = Coordinate::new_full(semi_to_degrees(lat), semi_to_degrees(lon));
-            path_layer.add_node(&coord);
+            ui.path_layer.as_ref().unwrap().add_node(&coord);
         }
-        map.add_overlay_layer(&path_layer);
+        ui.map.add_overlay_layer(ui.path_layer.as_ref().unwrap());
         // add pins for the starting and stopping points of the run
-        startstop_layer.remove_all();
+        ui.startstop_layer.as_ref().unwrap().remove_all();
         let len = run_path.len();
         if len > 0 {
             let start_lat_deg = semi_to_degrees(run_path[0..1][0].0);
@@ -720,16 +714,23 @@ fn build_map(
                 .child(&stop_widget.clone())
                 // Set the visual content widget
                 .build();
-            startstop_layer.add_marker(&start_marker);
-            startstop_layer.add_marker(&stop_marker);
+            ui.startstop_layer
+                .as_ref()
+                .unwrap()
+                .add_marker(&start_marker);
+            ui.startstop_layer
+                .as_ref()
+                .unwrap()
+                .add_marker(&stop_marker);
         }
-        map.add_overlay_layer(&startstop_layer);
+        ui.map
+            .add_overlay_layer(ui.startstop_layer.as_ref().unwrap());
         // Add a layer for indication of current position (aka the runner).
-        marker_layer.remove_all();
-        map.add_overlay_layer(&marker_layer);
+        ui.marker_layer.as_ref().unwrap().remove_all();
+        ui.map.add_overlay_layer(ui.marker_layer.as_ref().unwrap());
         // You may want to set an initial center and zoom level.
-        if map.viewport().is_some() {
-            let viewport = map.viewport().unwrap();
+        if ui.map.viewport().is_some() {
+            let viewport = ui.map.viewport().unwrap();
             let nec_lat = get_sess_record_field(data.clone(), "nec_lat");
             let nec_long = get_sess_record_field(data.clone(), "nec_long");
             let swc_lat = get_sess_record_field(data.clone(), "swc_lat");
@@ -745,9 +746,7 @@ fn build_map(
             }
             viewport.set_zoom_level(14.0);
         }
-        return Some(marker_layer);
     }
-    return None; // Can't find map source. Check internet access?
 }
 
 // Convert a value to user-defined units and return a formatted string when supplied a field and units.
@@ -1177,17 +1176,7 @@ fn instantiate_graph_cache(d: &Vec<FitDataRecord>, ui: &UserInterface) -> GraphC
 
 // Update the views when supplied with data.
 fn update_map_graph_and_summary_widgets(ui: &UserInterface, data: &Vec<FitDataRecord>) {
-    let map = ui.map.clone();
-    let path_layer = ui.path_layer.clone();
-    let marker_layer = ui.marker_layer.clone();
-    let startstop_layer = ui.startstop_layer.clone();
-    build_map(
-        &data,
-        map,
-        path_layer.unwrap(),
-        marker_layer.unwrap(),
-        startstop_layer.unwrap(),
-    );
+    build_map(&data, &ui);
     build_graphs(&data, &ui);
     build_summary(&data, &ui);
     return;
