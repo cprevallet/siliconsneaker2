@@ -563,7 +563,6 @@ fn build_individual_graph(
 fn build_graphs(_data: &Vec<FitDataRecord>, ui: &UserInterface, gc_rc: &Rc<GraphCache>) {
     // Need to clone to use inside the closure.
     let curr_pos = ui.curr_pos_adj.clone();
-    curr_pos.set_value(0.001);
     ui.da.set_draw_func(clone!(
         #[strong]
         gc_rc,
@@ -1330,7 +1329,7 @@ fn instantiate_ui(app: &Application) -> UserInterface {
             .upper(1.0)
             .step_increment(0.01)
             .page_increment(0.01)
-            .value(0.0)
+            .value(0.01)
             .build(),
         curr_pos_scale: Scale::builder()
             .orientation(Orientation::Horizontal)
