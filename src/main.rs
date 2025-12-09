@@ -1425,7 +1425,7 @@ fn build_gui(app: &Application) {
     // Create a new reference count for the user_interface structure.
     // This gets a little tricky.  We need to create a new reference
     // counted pointer, ui_rc, from the original object and clone it
-    // twice so that we may share the contents of ui_original in two
+    // twice so that we may *SHARE* the contents of ui_original in two
     // different closures ("button-clicked" and "native window response").
     let ui_rc = Rc::new(ui_original);
     let ui1 = Rc::clone(&ui_rc);
