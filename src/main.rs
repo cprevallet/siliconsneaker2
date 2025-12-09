@@ -1296,17 +1296,27 @@ fn instantiate_ui(app: &Application) -> UserInterface {
             .height_request(30)
             .width_request(50)
             .build(),
-        text_view: TextView::builder().monospace(true).margin_start(10).build(),
+        text_view: TextView::builder().monospace(true).margin_start(5).build(),
         text_buffer: TextBuffer::builder().build(),
-        frame_left: Frame::builder().build(),
+        frame_left: Frame::builder().margin_bottom(5).build(),
         frame_right: Frame::builder().build(),
         left_frame_pane: gtk4::Paned::builder()
             .orientation(Orientation::Vertical)
+            .margin_end(5)
+            .shrink_start_child(true)
+            .shrink_end_child(true)
+            .resize_start_child(true)
+            .resize_end_child(true)
             .build(),
         right_frame_pane: gtk4::Paned::builder()
             .orientation(Orientation::Horizontal)
+            .margin_start(5)
+            .shrink_start_child(true)
+            .shrink_end_child(false)
+            .resize_start_child(true)
+            .resize_end_child(false)
             .build(),
-        scrolled_window: ScrolledWindow::builder().build(),
+        scrolled_window: ScrolledWindow::builder().margin_top(5).build(),
         map: SimpleMap::new(),
         path_layer: None,
         startstop_layer: None,
@@ -1352,7 +1362,12 @@ fn instantiate_ui(app: &Application) -> UserInterface {
             .build(),
         curr_pos_label: Label::new(Some("🏃‍➡️")),
         y_zoom_label: Label::new(Some("🔍")),
-        controls_box: gtk4::Box::new(Orientation::Vertical, 10),
+        //        controls_box: gtk4::Box::new(Orientation::Vertical, 10),
+        controls_box: gtk4::Box::builder()
+            .orientation(Orientation::Vertical)
+            .width_request(120)
+            .spacing(10)
+            .build(),
         uom: StringList::new(&["🇪🇺 Metric", "🇺🇸 US"]),
 
         units_widget: DropDown::builder()
@@ -1372,7 +1387,7 @@ fn instantiate_ui(app: &Application) -> UserInterface {
             .height_request(30)
             .width_request(50)
             .build(),
-        da: DrawingArea::builder().build(),
+        da: DrawingArea::builder().width_request(400).build(),
     };
     ui.curr_pos_scale.set_adjustment(&ui.curr_pos_adj);
     ui.y_zoom_scale.set_adjustment(&ui.y_zoom_adj);
