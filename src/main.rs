@@ -128,7 +128,7 @@ fn set_plot_range(
         panic!("Invalid zoom.")
     }
     // Split vector of tuples into two vecs
-    let (x, y): (Vec<_>, Vec<_>) = data.into_iter().map(|(a, b)| (a, b)).unzip();
+    let (x, y): (Vec<_>, Vec<_>) = data.iter().map(|(a, b)| (a, b)).unzip();
     // Find the range of the chart, statistics says 95% should lie between +/3 sigma
     // for a normal distribution.  Let's go with that for the range.
     // Disallow zero, negative values of zoom.
@@ -1047,7 +1047,7 @@ fn instantiate_graph_cache(d: &Vec<FitDataRecord>, ui: &UserInterface) -> GraphC
     let mut ylabel: &str;
     // distance_pace
     let xy = get_xy(&d, &ui.units_widget, "distance", "enhanced_speed");
-    let range = set_plot_range(&xy.clone(), zoom_x, zoom_y);
+    let range = set_plot_range(&xy, zoom_x, zoom_y);
     match user_unit {
         Units::US => {
             ylabel = "Pace(min/mile)";
