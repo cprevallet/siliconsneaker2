@@ -786,7 +786,7 @@ fn format_string_for_field(fld: &FitDataField, user_unit: &Units) -> Option<Stri
             match result {
                 Ok(semi) => {
                     let degrees = semi_to_degrees(semi as f32);
-                    return Some(format!("{:<40}: {degrees:<6.3}°\n", fld.name(),));
+                    return Some(format!("{:<23}: {degrees:<6.3}°\n", fld.name(),));
                 }
                 Err(_) => return None,
             }
@@ -809,7 +809,7 @@ fn format_string_for_field(fld: &FitDataField, user_unit: &Units) -> Option<Stri
         | "timestamp"
         | "start_time" => {
             return Some(format!(
-                "{:<40}: {:<#} {:<}\n",
+                "{:<23}: {:<#} {:<}\n",
                 fld.name(),
                 fld.value(),
                 fld.units()
@@ -823,7 +823,7 @@ fn format_string_for_field(fld: &FitDataField, user_unit: &Units) -> Option<Stri
                     match user_unit {
                         Units::US => {
                             return Some(format!(
-                                "{:<40}: {:<.2} {:<}\n",
+                                "{:<23}: {:<.2} {:<}\n",
                                 fld.name(),
                                 val_cvt,
                                 "feet"
@@ -831,14 +831,14 @@ fn format_string_for_field(fld: &FitDataField, user_unit: &Units) -> Option<Stri
                         }
                         Units::Metric => {
                             return Some(format!(
-                                "{:<40}: {:<.2} {:<}\n",
+                                "{:<23}: {:<.2} {:<}\n",
                                 fld.name(),
                                 val_cvt,
                                 "meters"
                             ));
                         }
                         Units::None => {
-                            return Some(format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, ""));
+                            return Some(format!("{:<23}: {:<.2} {:<}\n", fld.name(), val_cvt, ""));
                         }
                     }
                 }
@@ -853,7 +853,7 @@ fn format_string_for_field(fld: &FitDataField, user_unit: &Units) -> Option<Stri
                     match user_unit {
                         Units::US => {
                             return Some(format!(
-                                "{:<40}: {:<.2} {:<}\n",
+                                "{:<23}: {:<.2} {:<}\n",
                                 fld.name(),
                                 val_cvt,
                                 "miles"
@@ -861,14 +861,14 @@ fn format_string_for_field(fld: &FitDataField, user_unit: &Units) -> Option<Stri
                         }
                         Units::Metric => {
                             return Some(format!(
-                                "{:<40}: {:<.2} {:<}\n",
+                                "{:<23}: {:<.2} {:<}\n",
                                 fld.name(),
                                 val_cvt,
                                 "kilometers"
                             ));
                         }
                         Units::None => {
-                            return Some(format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, ""));
+                            return Some(format!("{:<23}: {:<.2} {:<}\n", fld.name(), val_cvt, ""));
                         }
                     }
                 }
@@ -881,7 +881,7 @@ fn format_string_for_field(fld: &FitDataField, user_unit: &Units) -> Option<Stri
                 Ok(val) => {
                     let val_cvt = cvt_elapsed_time(val as f32);
                     return Some(format!(
-                        "{:<40}: {:01}h:{:02}m:{:02}s\n",
+                        "{:<23}: {:01}h:{:02}m:{:02}s\n",
                         fld.name(),
                         val_cvt.0,
                         val_cvt.1,
@@ -899,7 +899,7 @@ fn format_string_for_field(fld: &FitDataField, user_unit: &Units) -> Option<Stri
                     match user_unit {
                         Units::US => {
                             return Some(format!(
-                                "{:<40}: {:<.2} {:<}\n",
+                                "{:<23}: {:<.2} {:<}\n",
                                 fld.name(),
                                 val_cvt,
                                 "°F"
@@ -907,14 +907,14 @@ fn format_string_for_field(fld: &FitDataField, user_unit: &Units) -> Option<Stri
                         }
                         Units::Metric => {
                             return Some(format!(
-                                "{:<40}: {:<.2} {:<}\n",
+                                "{:<23}: {:<.2} {:<}\n",
                                 fld.name(),
                                 val_cvt,
                                 "°C"
                             ));
                         }
                         Units::None => {
-                            return Some(format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, ""));
+                            return Some(format!("{:<23}: {:<.2} {:<}\n", fld.name(), val_cvt, ""));
                         }
                     }
                 }
@@ -929,7 +929,7 @@ fn format_string_for_field(fld: &FitDataField, user_unit: &Units) -> Option<Stri
                     match user_unit {
                         Units::US => {
                             return Some(format!(
-                                "{:<40}: {:<.2} {:<}\n",
+                                "{:<23}: {:<.2} {:<}\n",
                                 fld.name(),
                                 val_cvt,
                                 "min/mile"
@@ -937,14 +937,14 @@ fn format_string_for_field(fld: &FitDataField, user_unit: &Units) -> Option<Stri
                         }
                         Units::Metric => {
                             return Some(format!(
-                                "{:<40}: {:<.2} {:<}\n",
+                                "{:<23}: {:<.2} {:<}\n",
                                 fld.name(),
                                 val_cvt,
                                 "min/km"
                             ));
                         }
                         Units::None => {
-                            return Some(format!("{:<40}: {:<.2} {:<}\n", fld.name(), val_cvt, ""));
+                            return Some(format!("{:<23}: {:<.2} {:<}\n", fld.name(), val_cvt, ""));
                         }
                     }
                 }
@@ -1296,7 +1296,7 @@ fn instantiate_ui(app: &Application) -> UserInterface {
             .height_request(30)
             .width_request(50)
             .build(),
-        text_view: TextView::builder().monospace(true).margin_start(5).build(),
+        text_view: TextView::builder().monospace(true).editable(false).build(),
         text_buffer: TextBuffer::builder().build(),
         frame_left: Frame::builder().margin_bottom(5).build(),
         frame_right: Frame::builder().build(),
@@ -1391,7 +1391,7 @@ fn instantiate_ui(app: &Application) -> UserInterface {
     };
     let provider = gtk4::CssProvider::new();
     let css_data =
-        "textview { font: 12px monospace; font-weight: 500; color: black; background: white; }";
+        "textview { font: 14px monospace; font-weight: 500; color: black; background: white; }";
     provider.load_from_data(css_data);
     gtk4::style_context_add_provider_for_display(
         &gdk::Display::default().expect("Could not get default display."),
