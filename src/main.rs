@@ -52,7 +52,7 @@ struct MapCache {
     run_path: Vec<(f32, f32)>,
 }
 
-const ICON_NAME: &str = "siliconsneaker";
+const ICON_NAME: &str = "siliconsneaker2";
 const APP_ID: &str = "com.github.cprevallet.siliconsneaker2";
 const PROGRAM_NAME: &str = "SiliconSneaker2";
 
