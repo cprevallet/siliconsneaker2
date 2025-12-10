@@ -53,7 +53,8 @@ struct MapCache {
 }
 
 const ICON_NAME: &str = "siliconsneaker";
-const APP_ID: &str = "SiliconSneaker II";
+const APP_ID: &str = "com.github.cprevallet.siliconsneaker2";
+const PROGRAM_NAME: &str = "SiliconSneaker2";
 
 // Program entry point.
 fn main() {
@@ -1275,7 +1276,7 @@ fn instantiate_ui(app: &Application) -> UserInterface {
     let mut ui = UserInterface {
         win: ApplicationWindow::builder()
             .application(app)
-            .title("SiliconSneaker II")
+            .title(PROGRAM_NAME)
             .build(),
         // Main horizontal container to hold the two frames side-by-side,
         // outer box wraps main_pane.
@@ -1665,7 +1666,7 @@ fn build_gui(app: &Application) {
             let dialog = gtk4::AboutDialog::builder()
                 .transient_for(&ui1.win)
                 .modal(true)
-                .program_name("SiliconSneaker II")
+                .program_name(PROGRAM_NAME)
                 .logo_icon_name(ICON_NAME)
                 .version("1.0.0")
                 .copyright("Copyright © 2025")
