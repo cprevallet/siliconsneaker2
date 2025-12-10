@@ -52,9 +52,13 @@ struct MapCache {
     run_path: Vec<(f32, f32)>,
 }
 
+const ICON_NAME: &str = "siliconsneaker";
+const APP_ID: &str = "SiliconSneaker II";
+
 // Program entry point.
 fn main() {
-    let app = Application::builder().build();
+    let app = Application::builder().application_id(APP_ID).build();
+    // let app = Application::builder().build();
     app.connect_activate(build_gui);
     app.run();
 }
@@ -1420,6 +1424,7 @@ fn instantiate_ui(app: &Application) -> UserInterface {
     button_content.append(&label);
     ui.btn.set_child(Some(&button_content));
 
+    // ui.win.set_icon_name(Some(ICON_NAME));
     ui.win.set_child(Some(&ui.outer_box));
     ui.button_box.append(&ui.btn);
     ui.button_box.append(&ui.units_widget);
@@ -1479,6 +1484,7 @@ fn build_gui(app: &Application) {
     let ui_original = instantiate_ui(app);
     ui_original.win.maximize();
     ui_original.win.present();
+    // ui_original.win.set_icon_name(Some(ICON_NAME));
 
     // Create a new reference count for the user_interface structure.
     // This gets a little tricky.  We need to create a new reference
@@ -1660,6 +1666,7 @@ fn build_gui(app: &Application) {
                 .transient_for(&ui1.win)
                 .modal(true)
                 .program_name("SiliconSneaker II")
+                .logo_icon_name(ICON_NAME)
                 .version("1.0.0")
                 .copyright("Copyright © 2025")
                 .comments("View your run files on the desktop!")
