@@ -5,7 +5,7 @@ GenericName=Garmin Watch File Viewer
 Comment=View runs from your Garmin brand watch
 # environmental file vars + executable + executable arguments
 MimeType=application/x-siliconsneaker2
-Exec=/home/craig/rust/siliconsneaker2/target/debug/testapp %u
+Exec=/home/craig/rust/siliconsneaker2/target/debug/siliconsneaker2 %u
 Icon=siliconsneaker2
 Terminal=false
 Type=Application
