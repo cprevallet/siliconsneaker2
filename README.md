@@ -8,8 +8,7 @@ Note:
 Support for TCX files has not been provided in this version.  The original SiliconSneaker
 (https://github.com/cprevallet/siliconsneaker)  may be used for viewing files of this type.  
 
-![Screenshot](https://github.com/cprevallet/siliconsneaker/blob/main/screenshot/siliconsneaker.png?raw=true)
-![Screenshot](https://github.com/cprevallet/siliconsneaker/blob/main/screenshot/siliconsneaker_windows.png?raw=true)
+![Screenshot](https://github.com/cprevallet/siliconsneaker2/blob/main/Screenshot.png?raw=true)
 
 # Why?
 https://youtu.be/JY-fb4hMTX8
