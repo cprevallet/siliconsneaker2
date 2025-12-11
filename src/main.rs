@@ -1,3 +1,29 @@
+/*
+ * This program provides a GTK graphical user interface to graphical
+ * plotting routines in order to plot Activity files stored in the Garmin
+ * (Dynastream) FIT format.
+ *
+ * License:
+ *
+ * Permission is granted to copy, use, and distribute for any commercial
+ * or noncommercial purpose in accordance with the requirements of
+ * version 2.0 of the GNU General Public license.
+ *
+ * This package is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this package; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+ *
+ * On Debian systems, the complete text of the GNU General
+ * Public License can be found in `/usr/share/common-licenses/GPL-2'.
+ *
+ * - Craig S. Prevallet, December, 2025
+ */
+
 use chrono::Datelike;
 use chrono::NaiveDateTime;
 use fitparser::{FitDataField, FitDataRecord, Value, profile::field_types::MesgNum};
@@ -7,7 +33,7 @@ use gtk4::glib::clone;
 use gtk4::prelude::*;
 use gtk4::{
     Adjustment, Application, ApplicationWindow, Button, ButtonsType, DrawingArea, DropDown,
-    FileChooserAction, FileChooserNative, Frame, Image, Label, MessageDialog, MessageType,
+    FileChooserAction, FileChooserNative, Frame, Image, Label, License, MessageDialog, MessageType,
     Orientation, ResponseType, Scale, ScrolledWindow, StringList, StringObject, TextBuffer,
     TextView, gdk,
 };
@@ -1701,6 +1727,8 @@ fn build_gui(app: &Application) {
                 .modal(true)
                 .program_name(PROGRAM_NAME)
                 .logo_icon_name(ICON_NAME)
+                .license_type(License::Gpl20)
+                .wrap_license(true)
                 .version(semantic_version.to_string())
                 .copyright(COPYRIGHT)
                 .comments(COMMENTS)
