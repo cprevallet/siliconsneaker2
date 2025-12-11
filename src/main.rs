@@ -1435,7 +1435,7 @@ fn instantiate_ui(app: &Application) -> UserInterface {
     button_content.append(&label);
     ui.btn.set_child(Some(&button_content));
 
-    // ui.win.set_icon_name(Some(ICON_NAME));
+    ui.win.set_icon_name(Some(ICON_NAME));
     ui.win.set_child(Some(&ui.outer_box));
     ui.button_box.append(&ui.btn);
     ui.button_box.append(&ui.units_widget);
@@ -1494,7 +1494,6 @@ fn build_gui(app: &Application) {
     // Instantiate the views.
     let ui_original = instantiate_ui(app);
     ui_original.win.present();
-    // ui_original.win.set_icon_name(Some(ICON_NAME));
 
     // Create a new reference count for the user_interface structure.
     // This gets a little tricky.  We need to create a new reference
