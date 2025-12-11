@@ -1,7 +1,6 @@
 /*
- * This program provides a GTK graphical user interface to graphical
- * plotting routines in order to plot Activity files stored in the Garmin
- * (Dynastream) FIT format.
+ * This program plots Activity files stored in the Garmin (Dynastream)
+ * FIT format.
  *
  * License:
  *
