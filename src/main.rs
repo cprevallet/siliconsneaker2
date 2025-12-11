@@ -1833,7 +1833,4 @@ fn load_config(path: &Path) -> WindowConfig {
 fn set_up_user_defaults(ui: &UserInterface) {
     let config = load_config(&Path::new(SETTINGSFILE));
     ui.win.set_default_size(config.width, config.height);
-    // ui.win.set_width_request(config.width);
-    // ui.win.set_height_request(config.height);
-    // ui.win.set_resizable(false);
 }
