@@ -17,11 +17,25 @@ use plotters::prelude::*;
 use plotters::style::full_palette::BROWN;
 use plotters::style::full_palette::CYAN;
 use plotters_cairo::CairoBackend;
+use semver::{BuildMetadata, Prerelease, Version};
 use std::fs::File;
 use std::io::ErrorKind;
 use std::rc::Rc;
+
 // Only God and I knew what this was doing when I wrote it.
 // Now only God knows.
+// Meta-program info. Displayed in about dialog.
+const ICON_NAME: &str = "siliconsneaker2";
+const APP_ID: &str = "com.github.cprevallet.siliconsneaker2";
+const PROGRAM_NAME: &str = "SiliconSneaker2";
+// See https://semver.org/
+// https://doc.rust-lang.org/cargo/reference/semver.html
+// for advice on version strings.
+const COPYRIGHT: &str = "Copyright © 2025";
+const COMMENTS: &str = "View your run files on the desktop!";
+const AUTHOR: &str = "Craig S. Prevallet <penguintx@hotmail.com>";
+const ARTIST1: &str = "Craig S. Prevallet";
+const ARTIST2: &str = "Amos Kofi Commey";
 
 // Unit of measure system.
 enum Units {
@@ -51,10 +65,6 @@ struct GraphCache {
 struct MapCache {
     run_path: Vec<(f32, f32)>,
 }
-
-const ICON_NAME: &str = "siliconsneaker2";
-const APP_ID: &str = "com.github.cprevallet.siliconsneaker2";
-const PROGRAM_NAME: &str = "SiliconSneaker2";
 
 // Program entry point.
 fn main() {
@@ -1483,7 +1493,6 @@ fn instantiate_map_cache(d: &Vec<FitDataRecord>) -> MapCache {
 fn build_gui(app: &Application) {
     // Instantiate the views.
     let ui_original = instantiate_ui(app);
-    ui_original.win.maximize();
     ui_original.win.present();
     // ui_original.win.set_icon_name(Some(ICON_NAME));
 
@@ -1663,17 +1672,41 @@ fn build_gui(app: &Application) {
         #[strong]
         ui1,
         move |_| {
+            // The compile-time::datetime_str!() macro provides a &str literal at compile time,
+            // e.g., "2025-12-10T18:36:25Z".
+            let datetime_raw = compile_time::datetime_str!();
+            //  Format it to be semver compliant. Build metadata identifiers can only contain
+            //  ASCII alphanumerics and hyphens (`-`). The SemVer specification states:
+            //  "Build metadata MAY be denoted by appending a plus sign and a series of
+            //  dot separated identifiers immediately following the patch or pre-release version.
+            //  Identifiers MUST comprise only ASCII alphanumerics and hyphens [0-9A-Za-z-]."
+            // A common approach is to strip the non-compliant characters ('T', ':', 'Z')
+            // and use the resulting string as a single build metadata identifier.
+            let build_metadata_str: String = datetime_raw
+                .chars()
+                .filter(|c| c.is_ascii_alphanumeric() || *c == '-') // Keep A-Z, a-z, 0-9, and '-'
+                .collect();
+            // The resulting string will be something like "2025-12-10183625".
+            // This is a single, valid build metadata identifier.
+            //  Create the BuildMetadata object.
+            let build = BuildMetadata::new(&build_metadata_str);
+            let semantic_version = Version {
+                major: 0,
+                minor: 1,
+                patch: 0,
+                pre: Prerelease::new("alpha.1").unwrap(),
+                build: build.unwrap(),
+            };
             let dialog = gtk4::AboutDialog::builder()
                 .transient_for(&ui1.win)
                 .modal(true)
                 .program_name(PROGRAM_NAME)
                 .logo_icon_name(ICON_NAME)
-                .version("1.0.0")
-                .copyright("Copyright © 2025")
-                .comments("View your run files on the desktop!")
-                .authors(vec![
-                    "Craig S. Prevallet <penguintx@hotmail.com>".to_string(),
-                ])
+                .version(semantic_version.to_string())
+                .copyright(COPYRIGHT)
+                .comments(COMMENTS)
+                .authors(vec![AUTHOR.to_string()])
+                .authors(vec![ARTIST1.to_string(), ARTIST2.to_string()])
                 .build();
             dialog.present();
         }
