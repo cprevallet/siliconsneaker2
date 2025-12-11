@@ -43,9 +43,14 @@ use plotters::style::full_palette::BROWN;
 use plotters::style::full_palette::CYAN;
 use plotters_cairo::CairoBackend;
 use semver::{BuildMetadata, Prerelease, Version};
+use serde::{Deserialize, Serialize};
+use std::error::Error;
+use std::fs;
 use std::fs::File;
 use std::io::ErrorKind;
+use std::path::Path;
 use std::rc::Rc;
+use toml;
 
 // Only God and I knew what this was doing when I wrote it.
 // Now only God knows.
@@ -61,7 +66,7 @@ const COMMENTS: &str = "View your run files on the desktop!";
 const AUTHOR: &str = "Craig S. Prevallet <penguintx@hotmail.com>";
 const ARTIST1: &str = "Craig S. Prevallet";
 const ARTIST2: &str = "Amos Kofi Commey";
-
+const SETTINGSFILE: &str = "siliconsneaker2_settings.toml"; //Not meant for production.
 // Unit of measure system.
 enum Units {
     Metric,
@@ -1474,6 +1479,7 @@ fn instantiate_ui(app: &Application) -> UserInterface {
     ui.path_layer = Some(add_path_layer_to_map(&ui.map).unwrap());
     ui.startstop_layer = Some(add_marker_layer_to_map(&ui.map).unwrap());
     ui.marker_layer = Some(add_marker_layer_to_map(&ui.map).unwrap());
+    set_up_user_defaults(&ui);
     return ui;
 }
 
@@ -1518,7 +1524,9 @@ fn instantiate_map_cache(d: &Vec<FitDataRecord>) -> MapCache {
 fn build_gui(app: &Application) {
     // Instantiate the views.
     let ui_original = instantiate_ui(app);
-    ui_original.win.present();
+    println!("Original before {:?}", ui_original.win.width());
+    // Read configuration file and default values.
+    println!("Original after {:?}", ui_original.win.width());
 
     // Create a new reference count for the user_interface structure.
     // This gets a little tricky.  We need to create a new reference
@@ -1527,6 +1535,8 @@ fn build_gui(app: &Application) {
     // different closures ("button-clicked" and "native window response").
     let ui_rc = Rc::new(ui_original);
     let ui1 = Rc::clone(&ui_rc);
+    ui_rc.win.present();
+    println!("ui_rc {:?}", ui_rc.win.width());
 
     // Handle callbacks for btn and about_btn.
     ui1.btn.connect_clicked(clone!(
@@ -1549,7 +1559,6 @@ fn build_gui(app: &Application) {
                 #[strong]
                 ui2,
                 move |dialog, response| {
-                    // let ui = ui_response.borrow();
                     if response == ResponseType::Accept {
                         // Extract the file path
                         if let Some(file) = dialog.file() {
@@ -1736,5 +1745,95 @@ fn build_gui(app: &Application) {
                 .build();
             dialog.present();
         }
-    )); //button-connect-clicked
+    )); // about btn clicked
+    ui1.win.connect_close_request(move |window| {
+        let config_path = Path::new(SETTINGSFILE);
+        // let (w, h) = window.default_size();
+        let current_config = WindowConfig {
+            width: window.width(),
+            height: window.height(),
+        };
+        match save_config(&current_config, config_path) {
+            Ok(_) => glib::signal::Propagation::Proceed,
+            Err(e) => {
+                show_error_dialog(window, e.to_string());
+                glib::signal::Propagation::Proceed
+            }
+        }
+    }); //window close
 } // build_gui
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct WindowConfig {
+    pub width: i32,
+    pub height: i32,
+}
+
+impl Default for WindowConfig {
+    fn default() -> Self {
+        WindowConfig {
+            width: 800,
+            height: 600,
+        }
+    }
+}
+
+/// Saves the WindowConfig struct to a TOML file.
+fn save_config(config: &WindowConfig, path: &Path) -> std::io::Result<()> {
+    // Use toml::to_string() to serialize the struct into a TOML string
+    let toml_string = toml::to_string(config)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+
+    // Write the TOML string to the specified file
+    fs::write(path, toml_string)?;
+
+    println!("Configuration saved to: {}", path.display());
+    Ok(())
+}
+
+/// Attempts to parse a TOML string into a WindowConfig struct.
+fn deserialize_config(toml_string: &str) -> std::result::Result<WindowConfig, Box<dyn Error>> {
+    // Use toml::from_str for deserialization
+    match toml::from_str(toml_string) {
+        Ok(config) => Ok(config),
+        // Convert the toml::de::Error into a boxed trait object
+        Err(e) => Err(Box::new(e)),
+    }
+}
+
+/// Loads the WindowConfig struct from a TOML file, using the dedicated
+/// deserialize_config function, or returns the default config on failure.
+fn load_config(path: &Path) -> WindowConfig {
+    if !path.exists() {
+        return WindowConfig::default();
+    }
+
+    // Read file content
+    match fs::read_to_string(path) {
+        Ok(toml_string) => {
+            // Call the dedicated deserialization function
+            match deserialize_config(&toml_string) {
+                Ok(config) => {
+                    println!("Configuration loaded successfully.");
+                    config
+                }
+                Err(e) => {
+                    eprintln!("Error parsing config file: {}. Using default.", e);
+                    WindowConfig::default()
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Error reading config file: {}. Using default.", e);
+            WindowConfig::default()
+        }
+    }
+}
+// Load the application settings from a configuration file.
+fn set_up_user_defaults(ui: &UserInterface) {
+    let config = load_config(&Path::new(SETTINGSFILE));
+    ui.win.set_default_size(config.width, config.height);
+    // ui.win.set_width_request(config.width);
+    // ui.win.set_height_request(config.height);
+    // ui.win.set_resizable(false);
+}
