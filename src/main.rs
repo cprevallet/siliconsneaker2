@@ -1737,7 +1737,8 @@ fn build_gui(app: &Application) {
                 .build();
             dialog.present();
         }
-    )); // about btn clicked
+    )); // about-btn-clicked
+
     ui1.win.connect_close_request(clone!(
         #[strong]
         ui1,
@@ -1759,7 +1760,7 @@ fn build_gui(app: &Application) {
                 }
             }
         }
-    )); //window close
+    )); //window-close
 } // build_gui
 
 #[derive(Debug, Serialize, Deserialize)]
