@@ -1748,6 +1748,7 @@ fn build_gui(app: &Application) {
                 main_split: ui1.main_pane.position(),
                 right_frame_split: ui1.right_frame_pane.position(),
                 left_frame_split: ui1.left_frame_pane.position(),
+                units_index: ui1.units_widget.selected(),
             };
             match save_config(&current_config, config_path) {
                 Ok(_) => glib::signal::Propagation::Proceed,
@@ -1767,6 +1768,7 @@ pub struct WindowConfig {
     pub main_split: i32,
     pub left_frame_split: i32,
     pub right_frame_split: i32,
+    pub units_index: u32, // toml won't serialize enums, we'll use the selected DropDown
 }
 
 impl Default for WindowConfig {
@@ -1777,6 +1779,7 @@ impl Default for WindowConfig {
             main_split: 200,
             left_frame_split: 200,
             right_frame_split: 200,
+            units_index: 0,
         }
     }
 }
@@ -1827,4 +1830,5 @@ fn set_up_user_defaults(ui: &UserInterface) {
     ui.main_pane.set_position(config.main_split);
     ui.right_frame_pane.set_position(config.right_frame_split);
     ui.left_frame_pane.set_position(config.left_frame_split);
+    ui.units_widget.set_selected(config.units_index);
 }
