@@ -25,6 +25,7 @@
 
 use chrono::Datelike;
 use chrono::NaiveDateTime;
+use directories::BaseDirs;
 use fitparser::{FitDataField, FitDataRecord, Value, profile::field_types::MesgNum};
 use gtk4::cairo::Context;
 use gtk4::ffi::GTK_STYLE_PROVIDER_PRIORITY_APPLICATION;
@@ -66,7 +67,8 @@ const COMMENTS: &str = "View your run files on the desktop!";
 const AUTHOR: &str = "Craig S. Prevallet <penguintx@hotmail.com>";
 const ARTIST1: &str = "Craig S. Prevallet";
 const ARTIST2: &str = "Amos Kofi Commey";
-const SETTINGSFILE: &str = "siliconsneaker2_settings.toml"; //Not meant for production.
+const SETTINGSFILE: &str = "siliconsneaker2_settings.toml";
+
 // Unit of measure system.
 enum Units {
     Metric,
@@ -74,6 +76,7 @@ enum Units {
     None,
 }
 
+// Useful values for plotting a graph.
 struct GraphAttributes {
     plotvals: Vec<(f32, f32)>,
     caption: String,
@@ -84,6 +87,7 @@ struct GraphAttributes {
     // color: RGBColor,
 }
 
+// In memory cache to speed up redraws.
 struct GraphCache {
     distance_pace: GraphAttributes,
     distance_heart_rate: GraphAttributes,
@@ -92,6 +96,7 @@ struct GraphCache {
     distance_temperature: GraphAttributes,
 }
 
+// In memory cache to speed up redraws.
 struct MapCache {
     run_path: Vec<(f32, f32)>,
 }
@@ -1271,6 +1276,7 @@ fn display_run(
     ui.scrolled_window.set_size_request(500, 300);
 }
 struct UserInterface {
+    settings_file: String,
     win: ApplicationWindow,
     outer_box: gtk4::Box,
     button_box: gtk4::Box,
@@ -1306,6 +1312,7 @@ struct UserInterface {
 // Instantiate the object holding the widgets (views).
 fn instantiate_ui(app: &Application) -> UserInterface {
     let mut ui = UserInterface {
+        settings_file: String::from(SETTINGSFILE),
         win: ApplicationWindow::builder()
             .application(app)
             .title(PROGRAM_NAME)
@@ -1471,6 +1478,18 @@ fn instantiate_ui(app: &Application) -> UserInterface {
     ui.path_layer = Some(add_path_layer_to_map(&ui.map).unwrap());
     ui.startstop_layer = Some(add_marker_layer_to_map(&ui.map).unwrap());
     ui.marker_layer = Some(add_marker_layer_to_map(&ui.map).unwrap());
+
+    // Cross-platform location of user config settings. BaseDirs is to
+    // query paths of user-invisible standard directories.
+    let base_dirs = BaseDirs::new();
+    if base_dirs.is_some() {
+        ui.settings_file = base_dirs
+            .unwrap()
+            .config_dir()
+            .join(SETTINGSFILE)
+            .to_string_lossy()
+            .to_string();
+    }
     set_up_user_defaults(&ui);
     return ui;
 }
@@ -1740,8 +1759,7 @@ fn build_gui(app: &Application) {
         #[strong]
         ui1,
         move |window| {
-            let config_path = Path::new(SETTINGSFILE);
-            // let (w, h) = window.default_size();
+            let config_path = Path::new(&ui1.settings_file);
             let current_config = WindowConfig {
                 width: window.width(),
                 height: window.height(),
@@ -1825,7 +1843,7 @@ fn load_config(path: &Path) -> WindowConfig {
 }
 // Load the application settings from a configuration file.
 fn set_up_user_defaults(ui: &UserInterface) {
-    let config = load_config(&Path::new(SETTINGSFILE));
+    let config = load_config(&Path::new(&ui.settings_file));
     ui.win.set_default_size(config.width, config.height);
     ui.main_pane.set_position(config.main_split);
     ui.right_frame_pane.set_position(config.right_frame_split);
