@@ -1734,7 +1734,7 @@ fn build_gui(app: &Application) {
             let semantic_version = Version {
                 major: 0,
                 minor: 2,
-                patch: 0,
+                patch: 1,
                 pre: Prerelease::new("alpha.1").unwrap(),
                 build: build.unwrap(),
             };
