@@ -1261,8 +1261,8 @@ fn display_run(
     // 2. Connect embedded widgets to their parents.
     ui.da_window.set_child(Some(&ui.da));
     ui.frame_right.set_child(Some(&ui.da_window));
-    ui.frame_left.set_child(Some(&ui.map));
 
+    ui.frame_left.set_child(Some(&ui.map));
     // 3. Configure the widget layout.
     ui.left_frame_pane.set_start_child(Some(&ui.frame_left));
     ui.left_frame_pane.set_end_child(Some(&ui.scrolled_window));
@@ -1452,18 +1452,28 @@ fn instantiate_ui(app: &Application) -> UserInterface {
     ui.about_btn.set_label(&ui.about_label);
     ui.units_widget.set_model(Some(&ui.uom));
     ui.text_view.set_buffer(Some(&ui.text_buffer));
+    ui.text_view.set_tooltip_text(Some("This section contains a report of lap, heart rate zones, and session summary information.\n\nThe text may be cut and pasted to other applications."));
     ui.scrolled_window.set_child(Some(&ui.text_view));
+    ui.about_btn.set_tooltip_text(Some(
+        "Show program credits, license, and copyright information.",
+    ));
 
     // Button with icon and label.
     let button_content = gtk4::Box::new(Orientation::Horizontal, 6);
     button_content.set_halign(gtk4::Align::Center);
     // "document-open" is a standard Freedesktop icon name.
     let icon = Image::from_icon_name("document-open");
-    let label = Label::new(Some("Select a FIT file..."));
+    let label = Label::new(Some("Open a FIT file..."));
     button_content.append(&icon);
     button_content.append(&label);
     ui.btn.set_child(Some(&button_content));
+    ui.btn.set_tooltip_text(Some(
+        "Open a Garmin Activity Fit file.\n\nPlease insure you have copied the file from the watch to the file system first.",
+    ));
 
+    ui.units_widget.set_tooltip_text(Some(
+        "Select your preferred unit system.\n\nThis will be the default next time you start the program but can be changed anytime.",
+    ));
     ui.win.set_icon_name(Some(ICON_NAME));
     ui.win.set_child(Some(&ui.outer_box));
     ui.button_box.append(&ui.btn);
@@ -1479,7 +1489,14 @@ fn instantiate_ui(app: &Application) -> UserInterface {
     ui.startstop_layer = Some(add_marker_layer_to_map(&ui.map).unwrap());
     ui.marker_layer = Some(add_marker_layer_to_map(&ui.map).unwrap());
 
-    // Cross-platform location of user config settings. BaseDirs is to
+    ui.curr_pos_scale.set_tooltip_text(Some("Move from the beginning to the end of your run with this control.\n\nHairlines will appear on the graphs and a marker will appear on the map indicating your position. Reset to the beginning to remove."));
+    ui.curr_pos_label.set_tooltip_text(Some("Move from the beginning to the end of your run with this control.\n\nHairlines will appear on the graphs and a marker will appear on the map indicating your position. Reset to the beginning to remove."));
+    ui.y_zoom_scale
+        .set_tooltip_text(Some("Zoom the graphs' y-axes with this control."));
+    ui.y_zoom_label
+        .set_tooltip_text(Some("Zoom the graphs' y-axes with this control."));
+    ui.frame_left.set_tooltip_text(Some("This section displays a run path based on GPS data collected by your watch.\n\nLook carefully at the runner displayed during certain holidays to see a program Easter Egg."));
+    ui.frame_right.set_tooltip_text(Some("This section contains graphs of values collected by your watch during your activity.\n\nDisplayed values are dependent on the sensors your watch supports (heart rate, altimeter, etc.)."));
     // query paths of user-invisible standard directories.
     let base_dirs = BaseDirs::new();
     if base_dirs.is_some() {
@@ -1733,8 +1750,8 @@ fn build_gui(app: &Application) {
             let build = BuildMetadata::new(&build_metadata_str);
             let semantic_version = Version {
                 major: 0,
-                minor: 2,
-                patch: 1,
+                minor: 4,
+                patch: 0,
                 pre: Prerelease::new("alpha.1").unwrap(),
                 build: build.unwrap(),
             };
