@@ -1468,7 +1468,7 @@ fn instantiate_ui(app: &Application) -> UserInterface {
     button_content.append(&label);
     ui.btn.set_child(Some(&button_content));
     ui.btn.set_tooltip_text(Some(
-        "Open a Garmin Activity Fit file.\n\nPlease insure you have copied the file from the watch to the file system first.",
+        "Open a Garmin Activity Fit file.\n\nPlease ensure you have copied the file from the watch to the file system first.",
     ));
 
     ui.units_widget.set_tooltip_text(Some(
@@ -1751,7 +1751,7 @@ fn build_gui(app: &Application) {
             let semantic_version = Version {
                 major: 0,
                 minor: 4,
-                patch: 0,
+                patch: 1,
                 pre: Prerelease::new("alpha.1").unwrap(),
                 build: build.unwrap(),
             };
