@@ -819,7 +819,7 @@ fn build_map(data: &Vec<FitDataRecord>, ui: &UserInterface, mc_rc: &Rc<MapCache>
             } else {
                 viewport.set_location(29.7601, -95.3701); // e.g. Houston, USA
             }
-            viewport.set_zoom_level(14.0);
+            // viewport.set_zoom_level(14.0);
         }
     }
     ui.map.queue_draw();
