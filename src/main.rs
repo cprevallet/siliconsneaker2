@@ -822,6 +822,7 @@ fn build_map(data: &Vec<FitDataRecord>, ui: &UserInterface, mc_rc: &Rc<MapCache>
             viewport.set_zoom_level(14.0);
         }
     }
+    ui.map.queue_draw();
 }
 
 // Convert a value to user-defined units and return a formatted string when supplied a field and units.
