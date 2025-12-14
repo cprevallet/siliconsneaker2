@@ -753,11 +753,6 @@ fn build_map(data: &Vec<FitDataRecord>, ui: &UserInterface, mc_rc: &Rc<MapCache>
         .is_some()
     {
         let mc = &**mc_rc;
-        let source = libshumate::MapSourceRegistry::with_defaults().by_id("osm-mapnik");
-        if source.is_none() {
-            panic!("No map source found.")
-        }
-        ui.map.set_map_source(Some(&source.unwrap()));
         // Get values from fit file.
         let run_path = &mc.run_path;
         ui.path_layer.as_ref().unwrap().remove_all();
@@ -1486,6 +1481,11 @@ fn instantiate_ui(app: &Application) -> UserInterface {
     ui.controls_box.append(&ui.y_zoom_scale);
     ui.controls_box.append(&ui.curr_pos_label);
     ui.controls_box.append(&ui.curr_pos_scale);
+    let source = libshumate::MapSourceRegistry::with_defaults().by_id("osm-mapnik");
+    if source.is_none() {
+        panic!("No map source found.")
+    }
+    ui.map.set_map_source(Some(&source.unwrap()));
     ui.path_layer = Some(add_path_layer_to_map(&ui.map).unwrap());
     ui.startstop_layer = Some(add_marker_layer_to_map(&ui.map).unwrap());
     ui.marker_layer = Some(add_marker_layer_to_map(&ui.map).unwrap());
