@@ -1593,6 +1593,75 @@ fn get_file_handle(dialog: &FileChooserNative, ui: &UserInterface) -> Option<Fil
     }
 }
 
+// Connect up the interactive widget handlers.
+fn connect_interactive_widgets(
+    data: &Vec<FitDataRecord>,
+    ui: &Rc<UserInterface>,
+    mc_rc: &Rc<MapCache>,
+    _gc_rc: &Rc<GraphCache>,
+) {
+    // clone the Rc pointer for each independent closure that needs the data.
+    let mc_rc_for_units = Rc::clone(&mc_rc);
+    // Hook-up the units_widget change handler.
+    // update everything when the unit system changes.
+    ui.units_widget.connect_selected_notify(clone!(
+        #[strong]
+        data,
+        #[strong]
+        ui,
+        move |_| {
+            // Create a new graph cache due to unit change.
+            let graph_cache_units = instantiate_graph_cache(&data, &ui);
+            // Wrap the GraphCache in an Rc for shared ownership.
+            let gc_rc_for_units = Rc::new(graph_cache_units);
+            update_map_graph_and_summary_widgets(&ui, &data, &mc_rc_for_units, &gc_rc_for_units);
+            let curr_pos = ui.curr_pos_adj.clone();
+            update_marker_layer(&data, &ui, &curr_pos, &mc_rc_for_units);
+            // ui.map.queue_draw();
+            ui.da.queue_draw();
+        },
+    ));
+
+    // Hook-up the zoom scale change handler.
+    // redraw the graphs when the zoom changes.
+    ui.y_zoom_scale.adjustment().connect_value_changed(clone!(
+        #[strong]
+        data,
+        #[strong]
+        ui,
+        move |_| {
+            // Create a new graph cache due to zoom.
+            let graph_cache_zoom = instantiate_graph_cache(&data, &ui);
+            // Wrap the GraphCache in an Rc for shared ownership.
+            let gc_rc_for_zoom = Rc::new(graph_cache_zoom);
+            build_graphs(&data, &ui, &gc_rc_for_zoom);
+            ui.da.queue_draw();
+        },
+    ));
+
+    // Hook-up the current position change handler.
+    // redraw the graphs and map when the current position changes.
+    // clone the Rc pointer for each independent closure that needs the data.
+    let mc_rc_for_marker = Rc::clone(&mc_rc);
+    let curr_pos = ui.curr_pos_adj.clone();
+    ui.curr_pos_scale.adjustment().connect_value_changed(clone!(
+        #[strong]
+        data,
+        #[strong]
+        ui,
+        #[strong]
+        curr_pos,
+        move |_| {
+            // Update graphs.
+            ui.da.queue_draw();
+            // Update marker.
+            update_marker_layer(&data, &ui, &curr_pos, &mc_rc_for_marker);
+            // Update map.
+            ui.map.queue_draw();
+        },
+    ));
+}
+
 // Instantiate the user-interface views and handle callbacks.
 fn build_gui(app: &Application) {
     // Instantiate the views.
@@ -1642,88 +1711,8 @@ fn build_gui(app: &Application) {
                                 let graph_cache = instantiate_graph_cache(&data, &ui2);
                                 // Wrap the GraphCache in an Rc for shared ownership.
                                 let gc_rc = Rc::new(graph_cache);
-
-                                // clone the Rc pointer for each independent closure that needs the data.
-                                let mc_rc_for_units = Rc::clone(&mc_rc);
                                 display_run(&ui2, &data, &mc_rc, &gc_rc);
-
-                                // Hook-up the units_widget change handler.
-                                // update everything when the unit system changes.
-                                ui2.units_widget.connect_selected_notify(clone!(
-                                    #[strong]
-                                    data,
-                                    #[strong]
-                                    ui2,
-                                    move |_| {
-                                        // Create a new graph cache due to zoom.
-                                        let graph_cache_units =
-                                            instantiate_graph_cache(&data, &ui2);
-                                        // Wrap the GraphCache in an Rc for shared ownership.
-                                        let gc_rc_for_units = Rc::new(graph_cache_units);
-                                        update_map_graph_and_summary_widgets(
-                                            &ui2,
-                                            &data,
-                                            &mc_rc_for_units,
-                                            &gc_rc_for_units,
-                                        );
-                                        let curr_pos = ui2.curr_pos_adj.clone();
-                                        update_marker_layer(
-                                            &data,
-                                            &ui2,
-                                            &curr_pos,
-                                            &mc_rc_for_units,
-                                        );
-                                        // ui2.map.queue_draw();
-                                        ui2.da.queue_draw();
-                                    },
-                                ));
-
-                                // Hook-up the zoom scale change handler.
-                                // redraw the graphs when the zoom changes.
-                                ui2.y_zoom_scale.adjustment().connect_value_changed(clone!(
-                                    #[strong]
-                                    data,
-                                    #[strong]
-                                    ui2,
-                                    move |_| {
-                                        // Create a new graph cache due to zoom.
-                                        let graph_cache_zoom = instantiate_graph_cache(&data, &ui2);
-                                        // Wrap the GraphCache in an Rc for shared ownership.
-                                        let gc_rc_for_zoom = Rc::new(graph_cache_zoom);
-                                        build_graphs(&data, &ui2, &gc_rc_for_zoom);
-                                        ui2.da.queue_draw();
-                                    },
-                                ));
-
-                                // Hook-up the current position change handler.
-                                // redraw the graphs and map when the current position changes.
-                                // clone the Rc pointer for each independent closure that needs the data.
-                                let mc_rc_for_marker = Rc::clone(&mc_rc);
-                                let curr_pos = ui2.curr_pos_adj.clone();
-                                ui2.curr_pos_scale
-                                    .adjustment()
-                                    .connect_value_changed(clone!(
-                                        #[strong]
-                                        data,
-                                        #[strong]
-                                        ui2,
-                                        #[strong]
-                                        curr_pos,
-                                        move |_| {
-                                            // Update graphs.
-                                            ui2.da.queue_draw();
-                                            // Update marker.
-                                            update_marker_layer(
-                                                &data,
-                                                &ui2,
-                                                &curr_pos,
-                                                &mc_rc_for_marker,
-                                            );
-                                            // Update map.
-                                            ui2.map.queue_draw();
-                                        },
-                                    ));
-                            } else {
+                                connect_interactive_widgets(&data, &ui2, &mc_rc, &gc_rc);
                             }
                             // unlike FileChooserDialog, 'native' creates a transient reference.
                             // It's good practice to drop references, but GTK handles the cleanup
