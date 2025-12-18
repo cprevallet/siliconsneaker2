@@ -1081,7 +1081,7 @@ fn build_summary(data: &Vec<FitDataRecord>, ui: &UserInterface) {
     };
 }
 
-// Calculate a cache of the graph attributes (see GraphAtributes) for display.
+// Calculate a cache of the graph attributes (see GraphAtributes) a *SINGLE* time for display.
 fn instantiate_graph_cache(d: &Vec<FitDataRecord>, ui: &UserInterface) -> GraphCache {
     let user_unit = get_unit_system(&ui.units_widget);
 
@@ -1249,7 +1249,7 @@ fn update_map_graph_and_summary_widgets(
 }
 
 // After reading the fit file, display the additional views of the UI.
-fn display_run(
+fn construct_views_from_data(
     ui: &UserInterface,
     data: &Vec<FitDataRecord>,
     mc: &Rc<MapCache>,
@@ -1561,7 +1561,7 @@ fn update_window_title(ui: &UserInterface, path_str: &str) {
     ui.win.set_title(Some(&pfx.to_string()));
 }
 // Get the file handle and set the window title based on it.
-fn get_file_handle(dialog: &FileChooserNative, ui: &UserInterface) -> Option<File> {
+fn get_file_handle_from_dialog(dialog: &FileChooserNative, ui: &UserInterface) -> Option<File> {
     // Extract the file path
     if let Some(file) = dialog.file() {
         if let Some(path) = file.path() {
@@ -1699,7 +1699,7 @@ fn build_gui(app: &Application) {
                 ui2,
                 move |dialog, response| {
                     if response == ResponseType::Accept {
-                        let fh = get_file_handle(&dialog, &ui2);
+                        let fh = get_file_handle_from_dialog(&dialog, &ui2);
                         if fh.is_some() {
                             let mut file = fh.unwrap();
                             if let Ok(data) = fitparser::from_reader(&mut file) {
@@ -1711,7 +1711,7 @@ fn build_gui(app: &Application) {
                                 let graph_cache = instantiate_graph_cache(&data, &ui2);
                                 // Wrap the GraphCache in an Rc for shared ownership.
                                 let gc_rc = Rc::new(graph_cache);
-                                display_run(&ui2, &data, &mc_rc, &gc_rc);
+                                construct_views_from_data(&ui2, &data, &mc_rc, &gc_rc);
                                 connect_interactive_widgets(&ui2, &data, &mc_rc, &gc_rc);
                             }
                             // unlike FileChooserDialog, 'native' creates a transient reference.
