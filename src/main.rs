@@ -1548,8 +1548,20 @@ fn instantiate_map_cache(d: &Vec<FitDataRecord>) -> MapCache {
     return mc;
 }
 
+// Update window title.
+fn update_window_title(ui: &UserInterface, path_str: &str) {
+    let c_title = ui.win.title().unwrap().to_string().to_owned();
+    let mut pfx = c_title
+        .chars()
+        .take_while(|&ch| ch != ':')
+        .collect::<String>();
+    pfx.push_str(":");
+    pfx.push_str(" ");
+    pfx.push_str(&path_str);
+    ui.win.set_title(Some(&pfx.to_string()));
+}
 // Get the file handle and set the window title based on it.
-fn get_file_handle(dialog: &FileChooserNative, ui2: &UserInterface) -> Option<File> {
+fn get_file_handle(dialog: &FileChooserNative, ui: &UserInterface) -> Option<File> {
     // Extract the file path
     if let Some(file) = dialog.file() {
         if let Some(path) = file.path() {
@@ -1558,25 +1570,17 @@ fn get_file_handle(dialog: &FileChooserNative, ui2: &UserInterface) -> Option<Fi
             let file_result = File::open(&*path_str);
             match file_result {
                 Ok(file) => {
-                    let c_title = ui2.win.title().unwrap().to_string().to_owned();
-                    let mut pfx = c_title
-                        .chars()
-                        .take_while(|&ch| ch != ':')
-                        .collect::<String>();
-                    pfx.push_str(":");
-                    pfx.push_str(" ");
-                    pfx.push_str(&path_str);
-                    ui2.win.set_title(Some(&pfx.to_string()));
+                    update_window_title(&ui, &path_str);
                     return Some(file);
                 }
                 Err(error) => match error.kind() {
                     // Handle specifically "Not Found"
                     ErrorKind::NotFound => {
-                        show_error_dialog(&ui2.win, "File not found.".to_string());
+                        show_error_dialog(&ui.win, "File not found.".to_string());
                         return None;
                     }
                     _ => {
-                        show_error_dialog(&ui2.win, "Error unknown. Permissions?".to_string());
+                        show_error_dialog(&ui.win, "Error unknown. Permissions?".to_string());
                         return None;
                     }
                 },
