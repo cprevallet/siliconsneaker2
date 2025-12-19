@@ -131,8 +131,8 @@ pub fn instantiate_ui(app: &Application) -> UserInterface {
         curr_pos_adj: Adjustment::builder()
             .lower(0.0)
             .upper(1.0)
-            .step_increment(0.01)
-            .page_increment(0.01)
+            .step_increment(0.001)
+            .page_increment(0.001)
             .value(0.01)
             .build(),
         curr_pos_scale: Scale::builder()
@@ -243,8 +243,8 @@ pub fn instantiate_ui(app: &Application) -> UserInterface {
     ui.startstop_layer = Some(add_marker_layer_to_map(&ui.map).unwrap());
     ui.marker_layer = Some(add_marker_layer_to_map(&ui.map).unwrap());
 
-    ui.curr_pos_scale.set_tooltip_text(Some("Move from the beginning to the end of your run with this control.\n\nHairlines will appear on the graphs and a marker will appear on the map indicating your position. Reset to the beginning to remove."));
-    ui.curr_pos_label.set_tooltip_text(Some("Move from the beginning to the end of your run with this control.\n\nHairlines will appear on the graphs and a marker will appear on the map indicating your position. Reset to the beginning to remove."));
+    ui.curr_pos_scale.set_tooltip_text(Some("Move from the beginning to the end of your run with this control.\n\nHairlines will appear on the graphs and a marker will appear on the map indicating your position. Reset to the beginning to remove.\n\nUse your keyboard right and left arrows for high precision control."));
+    ui.curr_pos_label.set_tooltip_text(Some("Move from the beginning to the end of your run with this control.\n\nHairlines will appear on the graphs and a marker will appear on the map indicating your position. Reset to the beginning to remove.\n\nUse your keyboard right and left arrows for high precision control."));
     ui.y_zoom_scale
         .set_tooltip_text(Some("Zoom the graphs' y-axes with this control."));
     ui.y_zoom_label
