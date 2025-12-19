@@ -28,21 +28,18 @@ mod data;
 mod gui;
 
 use crate::config::{
-    APP_ID, ARTIST1, ARTIST2, AUTHOR, COMMENTS, COPYRIGHT, ICON_NAME, PROGRAM_NAME, Units,
-    WindowConfig, save_config,
+    APP_ID, ARTIST1, ARTIST2, AUTHOR, COMMENTS, COPYRIGHT, ICON_NAME, PROGRAM_NAME, WindowConfig,
+    save_config,
 };
-
-use crate::data::{GraphAttributes, GraphCache, MapCache, get_xy, set_plot_range};
 use crate::gui::{
-    UserInterface, connect_interactive_widgets, construct_views_from_data, get_unit_system,
-    instantiate_ui,
+    UserInterface, connect_interactive_widgets, construct_views_from_data, instantiate_graph_cache,
+    instantiate_map_cache, instantiate_ui,
 };
-use fitparser::FitDataRecord;
 use gtk4::glib::clone;
 use gtk4::prelude::*;
 use gtk4::{
-    Application, ButtonsType, DropDown, FileChooserAction, FileChooserNative, License,
-    MessageDialog, MessageType, ResponseType,
+    Application, ButtonsType, FileChooserAction, FileChooserNative, License, MessageDialog,
+    MessageType, ResponseType,
 };
 use semver::{BuildMetadata, Prerelease};
 use std::error::Error;
@@ -64,168 +61,6 @@ fn main() {
         build_gui(app, files, "");
     });
     app.run();
-}
-
-// Calculate a cache of the graph attributes (see GraphAtributes) a *SINGLE* time for display.
-fn instantiate_graph_cache(d: &Vec<FitDataRecord>, ui: &UserInterface) -> GraphCache {
-    let user_unit = get_unit_system(&ui.units_widget);
-
-    let zoom_x: f32 = ui.x_zoom_adj.value() as f32;
-    let zoom_y: f32 = ui.y_zoom_adj.value() as f32;
-    let num_formatter = |x: &f32| format!("{:7.2}", x);
-    let pace_formatter = |x: &f32| {
-        let mins = x.trunc();
-        let secs = x.fract() * 60.0;
-        format!("{:02.0}:{:02.0}", mins, secs)
-    };
-    let mut xlabel: &str;
-    let mut ylabel: &str;
-    // distance_pace
-    let xy = get_xy(&d, &ui.units_widget, "distance", "enhanced_speed");
-    let range = set_plot_range(&xy, zoom_x, zoom_y);
-    match user_unit {
-        Units::US => {
-            ylabel = "Pace (min/mile)";
-            xlabel = "Distance (miles)";
-        }
-        Units::Metric => {
-            ylabel = "Pace (min/km)";
-            xlabel = "Distance (km)";
-        }
-        Units::None => {
-            ylabel = "";
-            xlabel = "";
-        }
-    }
-    let distance_pace = GraphAttributes {
-        plotvals: (xy),
-        caption: (String::from("Pace")),
-        xlabel: (String::from(xlabel)),
-        ylabel: (String::from(ylabel)),
-        plot_range: (range),
-        y_formatter: (Box::new(pace_formatter)),
-        // color: (&RED),
-    };
-    // distance_heart_rate
-    let xy = get_xy(&d, &ui.units_widget, "distance", "heart_rate");
-    let range = set_plot_range(&xy.clone(), zoom_x, zoom_y);
-    match user_unit {
-        Units::US => {
-            ylabel = "Heart rate (bpm)";
-            xlabel = "Distance (miles)";
-        }
-        Units::Metric => {
-            ylabel = "Heart rate (bpm)";
-            xlabel = "Distance (km)";
-        }
-        Units::None => {
-            ylabel = "";
-            xlabel = "";
-        }
-    }
-    let distance_heart_rate = GraphAttributes {
-        plotvals: (xy),
-        caption: (String::from("Heart rate")),
-        xlabel: (String::from(xlabel)),
-        ylabel: (String::from(ylabel)),
-        plot_range: (range),
-        y_formatter: (Box::new(num_formatter)),
-        // color: (&BLUE),
-    };
-    // distance-cadence
-    let xy = get_xy(&d, &ui.units_widget, "distance", "cadence");
-    let range = set_plot_range(&xy.clone(), zoom_x, zoom_y);
-    match user_unit {
-        Units::US => {
-            ylabel = "Cadence";
-            xlabel = "Distance (miles)";
-        }
-        Units::Metric => {
-            ylabel = "Cadence";
-            xlabel = "Distance (km)";
-        }
-        Units::None => {
-            ylabel = "";
-            xlabel = "";
-        }
-    }
-    let distance_cadence = GraphAttributes {
-        plotvals: (xy),
-        caption: (String::from("Cadence")),
-        xlabel: (String::from(xlabel)),
-        ylabel: (String::from(ylabel)),
-        plot_range: (range),
-        y_formatter: (Box::new(num_formatter)),
-        // color: (&CYAN),
-    };
-    //distance-elevation
-    let xy = get_xy(&d, &ui.units_widget, "distance", "enhanced_altitude");
-    let range = set_plot_range(&xy.clone(), zoom_x, zoom_y);
-    match user_unit {
-        Units::US => {
-            ylabel = "Elevation (feet)";
-            xlabel = "Distance (miles)";
-        }
-        Units::Metric => {
-            ylabel = "Elevation (m)";
-            xlabel = "Distance (km)";
-        }
-        Units::None => {
-            ylabel = "";
-            xlabel = "";
-        }
-    }
-    let distance_elevation = GraphAttributes {
-        plotvals: (xy),
-        caption: (String::from("Elevation")),
-        xlabel: (String::from(xlabel)),
-        ylabel: (String::from(ylabel)),
-        plot_range: (range),
-        y_formatter: (Box::new(num_formatter)),
-        // color: (&RED),
-    };
-    // distance-temperature
-    let xy = get_xy(&d, &ui.units_widget, "distance", "temperature");
-    let range = set_plot_range(&xy.clone(), zoom_x, zoom_y);
-    match user_unit {
-        Units::US => {
-            ylabel = "Temperature (°F)";
-            xlabel = "Distance (miles)";
-        }
-        Units::Metric => {
-            ylabel = "Temperature (°C)";
-            xlabel = "Distance (km)";
-        }
-        Units::None => {
-            ylabel = "";
-            xlabel = "";
-        }
-    }
-    let distance_temperature = GraphAttributes {
-        plotvals: (xy),
-        caption: (String::from("Temperature")),
-        xlabel: (String::from(xlabel)),
-        ylabel: (String::from(ylabel)),
-        plot_range: (range),
-        y_formatter: (Box::new(num_formatter)),
-        // color: (&BROWN),
-    };
-    let gc: GraphCache = GraphCache {
-        distance_pace: distance_pace,
-        distance_heart_rate: distance_heart_rate,
-        distance_cadence: distance_cadence,
-        distance_elevation: distance_elevation,
-        distance_temperature: distance_temperature,
-    };
-    return gc;
-}
-
-// Instantiate a means to only capture the data in run_path a *SINGLE* time.
-fn instantiate_map_cache(d: &Vec<FitDataRecord>) -> MapCache {
-    let units_widget = DropDown::builder().build(); // bogus value - no units required for position
-    let run_path = get_xy(&d, &units_widget, "position_lat", "position_long");
-    let mc: MapCache = MapCache { run_path: run_path };
-    return mc;
 }
 
 // Create and present a modal MessageDialog when supplied a text string.
@@ -271,7 +106,7 @@ fn update_window_title(ui: &UserInterface, path_str: &str) {
     ui.win.set_title(Some(&pfx.to_string()));
 }
 
-// Get the file handle from the command line (environment)
+// Get the file handle from the command line.
 fn get_file_handle_from_command_line(
     file: &gtk4::gio::File,
     ui: &Rc<UserInterface>,
@@ -303,7 +138,7 @@ fn get_file_handle_from_command_line(
     }
 }
 
-// Get the file handle and set the window title based on it.
+// Get the file handle from a dialog.
 fn get_file_handle_from_dialog(dialog: &FileChooserNative, ui: &UserInterface) -> Option<File> {
     // Extract the file path
     if let Some(file) = dialog.file() {

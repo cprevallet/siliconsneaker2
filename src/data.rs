@@ -1,4 +1,4 @@
-// Data Logic and Processing
+// Module containing data logic and processing.
 
 use crate::config::Units;
 use crate::gui::get_unit_system;

@@ -25,6 +25,10 @@ use plotters_cairo::CairoBackend;
 use std::path::Path;
 use std::rc::Rc;
 
+// #####################################################################
+// ##################### OVERALL UI FUNCTIONS ##########################
+// #####################################################################
+// Widgets used for the graphical user interface.
 pub struct UserInterface {
     pub settings_file: String,
     pub win: ApplicationWindow,
@@ -288,6 +292,7 @@ pub fn construct_views_from_data(
     // 4. Size the widgets.
     ui.scrolled_window.set_size_request(500, 300);
 }
+
 // Connect up the interactive widget handlers.
 pub fn connect_interactive_widgets(
     ui: &Rc<UserInterface>,
@@ -376,6 +381,19 @@ pub fn get_unit_system(units_widget: &DropDown) -> Units {
     return Units::None;
 }
 
+// Load the application settings from a configuration file.
+pub fn set_up_user_defaults(ui: &UserInterface) {
+    let config = load_config(&Path::new(&ui.settings_file));
+    ui.win.set_default_size(config.width, config.height);
+    ui.main_pane.set_position(config.main_split);
+    ui.right_frame_pane.set_position(config.right_frame_split);
+    ui.left_frame_pane.set_position(config.left_frame_split);
+    ui.units_widget.set_selected(config.units_index);
+}
+
+// #####################################################################
+// ##################### GRAPH FUNCTIONS ###############################
+// #####################################################################
 // Use plotters.rs to draw a graph on the drawing area.
 fn draw_graphs(
     gc_rc: &Rc<GraphCache>,
@@ -586,6 +604,9 @@ fn update_map_graph_and_summary_widgets(
     return;
 }
 
+// #####################################################################
+// ##################### MAP FUNCTIONS #################################
+// #####################################################################
 // Add a marker layer to the map.
 fn add_marker_layer_to_map(map: &SimpleMap) -> Option<MarkerLayer> {
     if map.viewport().is_some() {
@@ -759,6 +780,9 @@ fn build_map(data: &Vec<FitDataRecord>, ui: &UserInterface, mc_rc: &Rc<MapCache>
     }
 }
 
+// #####################################################################
+// ##################### SUMMARY FUNCTIONS #############################
+// #####################################################################
 // Convert a value to user-defined units and return a formatted string when supplied a field and units.
 fn format_string_for_field(fld: &FitDataField, user_unit: &Units) -> Option<String> {
     match fld.name() {
@@ -1012,8 +1036,11 @@ fn build_summary(data: &Vec<FitDataRecord>, ui: &UserInterface) {
     };
 }
 
+// #####################################################################
+// ##################### CACHE FUNCTIONS ###############################
+// #####################################################################
 // Calculate a cache of the graph attributes (see GraphAtributes) a *SINGLE* time for display.
-fn instantiate_graph_cache(d: &Vec<FitDataRecord>, ui: &UserInterface) -> GraphCache {
+pub fn instantiate_graph_cache(d: &Vec<FitDataRecord>, ui: &UserInterface) -> GraphCache {
     let user_unit = get_unit_system(&ui.units_widget);
 
     let zoom_x: f32 = ui.x_zoom_adj.value() as f32;
@@ -1166,12 +1193,10 @@ fn instantiate_graph_cache(d: &Vec<FitDataRecord>, ui: &UserInterface) -> GraphC
     return gc;
 }
 
-// Load the application settings from a configuration file.
-pub fn set_up_user_defaults(ui: &UserInterface) {
-    let config = load_config(&Path::new(&ui.settings_file));
-    ui.win.set_default_size(config.width, config.height);
-    ui.main_pane.set_position(config.main_split);
-    ui.right_frame_pane.set_position(config.right_frame_split);
-    ui.left_frame_pane.set_position(config.left_frame_split);
-    ui.units_widget.set_selected(config.units_index);
+// Calculate a means to capture the data in run_path a *SINGLE* time.
+pub fn instantiate_map_cache(d: &Vec<FitDataRecord>) -> MapCache {
+    let units_widget = DropDown::builder().build(); // bogus value - no units required for position
+    let run_path = get_xy(&d, &units_widget, "position_lat", "position_long");
+    let mc: MapCache = MapCache { run_path: run_path };
+    return mc;
 }

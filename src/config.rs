@@ -1,4 +1,4 @@
-// User preferences and static information and helper utilities.
+// Module containing user preferences, static information and helper utilities.
 use crate::Error;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -8,9 +8,6 @@ use std::path::Path;
 pub const ICON_NAME: &str = "siliconsneaker2";
 pub const APP_ID: &str = "com.github.cprevallet.siliconsneaker2";
 pub const PROGRAM_NAME: &str = "SiliconSneaker2";
-// See https://semver.org/
-// https://doc.rust-lang.org/cargo/reference/semver.html
-// for advice on version strings.
 pub const COPYRIGHT: &str = "Copyright © 2025";
 pub const COMMENTS: &str = "View your run files on the desktop!";
 pub const AUTHOR: &str = "Craig S. Prevallet <penguintx@hotmail.com>";
