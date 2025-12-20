@@ -4,7 +4,7 @@ use crate::config::{ICON_NAME, PROGRAM_NAME, SETTINGSFILE, Units, load_config};
 use crate::data::{
     GraphAttributes, GraphCache, MapCache, cvt_altitude, cvt_distance, cvt_elapsed_time, cvt_pace,
     cvt_temperature, get_run_start_date, get_sess_record_field, get_time_in_zone_field,
-    get_timestamps, get_xy, is_american_thanksgiving, semi_to_degrees, set_plot_range,
+    get_timestamps, get_xy, is_american_thanksgiving, is_easter, semi_to_degrees, set_plot_range,
 };
 use directories::BaseDirs;
 use fitparser::{FitDataField, FitDataRecord, profile::field_types::MesgNum};
@@ -671,6 +671,9 @@ fn get_symbol(data: &Vec<FitDataRecord>) -> &str {
     }
     if is_american_thanksgiving(year, month, day) {
         symbol = concat!(r#"<span size="200%">"#, "🦃", "</span>");
+    }
+    if is_easter(year, month, day) {
+        symbol = concat!(r#"<span size="200%">"#, "🐰", "</span>");
     }
     let _ = "📍";
     return symbol;
