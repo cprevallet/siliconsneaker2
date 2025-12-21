@@ -1,7 +1,5 @@
 use fluent::{FluentArgs, FluentBundle, FluentResource};
-use once_cell::sync::Lazy;
 use std::cell::RefCell;
-use std::sync::Mutex;
 use unic_langid::LanguageIdentifier;
 
 thread_local! {
