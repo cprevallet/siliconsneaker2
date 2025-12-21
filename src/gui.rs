@@ -6,6 +6,7 @@ use crate::data::{
     cvt_temperature, get_run_start_date, get_sess_record_field, get_time_in_zone_field,
     get_timestamps, get_xy, is_american_thanksgiving, is_easter, semi_to_degrees, set_plot_range,
 };
+use crate::i18n::tr;
 use directories::BaseDirs;
 use fitparser::{FitDataField, FitDataRecord, profile::field_types::MesgNum};
 use gtk4::cairo::Context;

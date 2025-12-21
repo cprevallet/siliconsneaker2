@@ -26,6 +26,7 @@
 mod config;
 mod data;
 mod gui;
+mod i18n;
 
 use crate::config::{
     APP_ID, ARTIST1, ARTIST2, AUTHOR, COMMENTS, COPYRIGHT, ICON_NAME, PROGRAM_NAME, WindowConfig,
