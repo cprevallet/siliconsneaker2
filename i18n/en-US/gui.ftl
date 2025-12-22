@@ -4,8 +4,6 @@ UNITS_US = 🏈 US
 ABOUT_BUTTON_LABEL = About
 ABOUT_DIALOG_COMMENT = View your run files on the desktop.
 OPEN_FILE_BUTTON_LABEL = Open a FIT file
-RUNNER_ICON = 🏃‍➡️
-ZOOM_ICON = 🔍
 
 TOOLTIP_TEXT_VIEW = 
     This section contains a report of lap, heart rate zones, and session summary information.

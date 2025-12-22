@@ -4,8 +4,6 @@ UNITS_US = 🏈 US
 ABOUT_BUTTON_LABEL = À propos
 ABOUT_DIALOG_COMMENT = Consultez vos fichiers de course à pied sur le bureau de votre ordinateur.
 OPEN_FILE_BUTTON_LABEL = Ouvrir un fichier FIT...
-RUNNER_ICON = 🏃‍➡️
-ZOOM_ICON = 🔍
 
 TOOLTIP_TEXT_VIEW = 
     Cette section contient un rapport sur les tours, les zones de fréquence cardiaque et les informations de résumé de session.
