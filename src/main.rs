@@ -220,7 +220,7 @@ fn build_gui(app: &Application, files: &[gtk4::gio::File], _: &str) {
             // 1. Create the Native Dialog
             // Notice the arguments: Title, Parent Window, Action, Accept Label, Cancel Label
             let native = FileChooserNative::new(
-                Some("Open File Native"),
+                Some(&tr("OPEN_FILE_BUTTON_LABEL", None)),
                 Some(&ui1.win),
                 FileChooserAction::Open,
                 Some("Open"),   // Custom label for the "OK" button
