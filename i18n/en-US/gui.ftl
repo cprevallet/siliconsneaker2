@@ -1,46 +1,64 @@
-PROGRAM_TITLE = "PROGRAM_NAME"
-UNITS_METRIC = "⚽ Metric"
-UNITS_US = "🏈 US"
-ABOUT_BUTTON_LABEL = "About"
-OPEN_FILE_BUTTON_LABEL = "Open a FIT file..."
-RUNNER_ICON = "🏃‍➡️"
-ZOOM_ICON = "🔍"
+program-title = PROGRAM_NAME
+about-button-label = About
+open-file-button-label = Open a FIT file
+runner-icon = 🏃‍➡️
+zoom-icon = 🔍
 
-TOOLTIP_TEXT_VIEW = "This section contains a report of lap, heart rate zones, and session summary information.\n\nThe text may be cut and pasted to other applications."
-TOOLTIP_ABOUT_BUTTON = "Show program credits, license, and copyright information."
-TOOLTIP_OPEN_BUTTON = "Open a Garmin Activity Fit file.\n\nPlease ensure you have copied the file from the watch to the file system first."
-TOOLTIP_UNITS_DROPDOWN = "Select your preferred unit system.\n\nThis will be the default next time you start the program but can be changed anytime."
-TOOLTIP_POSITION_SCALE = "Move from the beginning to the end of your run with this control.\n\nHairlines will appear on the graphs and a marker will appear on the map indicating your position. Reset to the beginning to remove.\n\nUse your keyboard right and left arrows for high precision control."
-TOOLTIP_ZOOM_SCALE = "Zoom the graphs' y-axes with this control."
-TOOLTIP_MAP_FRAME = "This section displays a run path based on GPS data collected by your watch.\n\nLook carefully at the runner displayed during certain holidays to see a program Easter Egg."
-TOOLTIP_GRAPH_FRAME = "This section contains graphs of values collected by your watch during your activity.\n\nDisplayed values are dependent on the sensors your watch supports (heart rate, altimeter, etc.)."
+tooltip-text-view = 
+    This section contains a report of lap, heart rate zones, and session summary information.
+    The text may be cut and pasted to other applications.
 
-GRAPH_CAPTION_PACE = "Pace"
-GRAPH_CAPTION_HR = "Heart rate"
-GRAPH_CAPTION_CADENCE = "Cadence"
-GRAPH_CAPTION_ELEVATION = "Elevation"
-GRAPH_CAPTION_TEMP = "Temperature"
+tooltip-about-button = Show program credits, license, and copyright information.
 
-LABEL_DISTANCE_MILES = "Distance (miles)"
-LABEL_DISTANCE_KM = "Distance (km)"
-LABEL_PACE_US = "Pace (min/mile)"
-LABEL_PACE_METRIC = "Pace (min/km)"
-LABEL_HR_BPM = "Heart rate (bpm)"
-LABEL_CADENCE = "Cadence"
-LABEL_ELEVATION_FT = "Elevation (feet)"
-LABEL_ELEVATION_M = "Elevation (m)"
-LABEL_TEMP_F = "Temperature (°F)"
-LABEL_TEMP_C = "Temperature (°C)"
+tooltip-open-button = 
+    Open a Garmin Activity Fit file.
+    Please ensure you have copied the file from the watch to the file system first.
 
-SUMMARY_FILE_LOADED = "File loaded."
-SUMMARY_SESSION_HEADER = "============================ Session ==================================\n"
-SUMMARY_LAP_HEADER = "------------------------------ Lap {}-----------------------------------\n"
-SUMMARY_HR_ZONE_HEADER = "=================== Time in Heart Rate Zones for Session  ========\n"
-SUMMARY_HR_ZONE_LABEL = "Zone"
+tooltip-units-dropdown = 
+    Select your preferred unit system.
+    This will be the default next time you start the program but can be changed anytime.
 
-UNIT_FEET = "feet"
-UNIT_METERS = "meters"
-UNIT_MILES = "miles"
-UNIT_KM = "kilometers"
-UNIT_PACE_US = "min/mile"
-UNIT_PACE_METRIC = "min/km"
+tooltip-position-scale = 
+    Move from the beginning to the end of your run with this control.
+    Hairlines will appear on the graphs and a marker will appear on the map indicating your position. Reset to the beginning to remove.
+    Use your keyboard right and left arrows for high precision control.
+
+tooltip-zoom-scale = Zoom the graphs' y-axes with this control.
+
+tooltip-map-frame = 
+    This section displays a run path based on GPS data collected by your watch.
+    Look carefully at the runner displayed during certain holidays to see a program Easter Egg.
+
+tooltip-graph-frame = 
+    This section contains graphs of values collected by your watch during your activity.
+    Displayed values are dependent on the sensors your watch supports (heart rate, altimeter, etc.).
+
+graph-caption-pace = Pace
+graph-caption-hr = Heart rate
+graph-caption-cadence = Cadence
+graph-caption-elevation = Elevation
+graph-caption-temp = Temperature
+
+label-distance-miles = Distance (miles)
+label-distance-km = Distance (km)
+label-pace-us = Pace (min/mile)
+label-pace-metric = Pace (min/km)
+label-hr-bpm = Heart rate (bpm)
+label-cadence = Cadence
+label-elevation-ft = Elevation (feet)
+label-elevation-m = Elevation (m)
+label-temp-f = Temperature (°F)
+label-temp-c = Temperature (°C)
+
+summary-file-loaded = File loaded.
+summary-session-header = ============================ Session ==================================
+summary-lap-header = ------------------------------ Lap {$index}-----------------------------------
+summary-hr-zone-header = =================== Time in Heart Rate Zones for Session  ========
+summary-hr-zone-label = Zone
+
+unit-feet = feet
+unit-meters = meters
+unit-miles = miles
+unit-km = kilometers
+unit-pace-us = min/mile
+unit-pace-metric = min/km

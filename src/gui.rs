@@ -184,7 +184,7 @@ pub fn instantiate_ui(app: &Application) -> UserInterface {
             .height_request(30)
             .width_request(100)
             .build(),
-        about_label: String::from("About"),
+        about_label: tr("about-button-label", None),
         about_btn: Button::builder()
             .margin_top(5)
             .margin_bottom(5)
