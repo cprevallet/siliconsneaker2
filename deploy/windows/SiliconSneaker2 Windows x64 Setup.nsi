@@ -141,6 +141,7 @@ Section "Uninstall"
     
   Delete "$SMPROGRAMS\$StartMenuFolder\SiliconSneaker2.lnk" 
   Delete "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk"
+  Delete "$SMPROGRAMS\$StartMenuFolder\SiliconSneaker2_Documentation.lnk"
   RMDir "$SMPROGRAMS\$StartMenuFolder"
   
   ;nsExec::Exec 'set STATIC_FILES ""'
