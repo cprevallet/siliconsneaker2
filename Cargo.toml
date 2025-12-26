@@ -40,7 +40,6 @@ assets = [
  ["./doc/GarminMounted.png", "/usr/local/share/doc/siliconsneaker2/GarminMounted.png", "644"],
  ["./doc/help.html", "/usr/local/share/doc/siliconsneaker2/help.html", "644"],
  ["./doc/hostage.jpg", "/usr/local/share/doc/siliconsneaker2/hostage.jpg", "644"],
- ["./doc/installed.txt", "/usr/local/share/doc/siliconsneaker2/installed.txt", "644"],
  ["./doc/Nautilus.png", "/usr/local/share/doc/siliconsneaker2/Nautilus.png", "644"],
  ["./doc/Screenshot_bear.png", "/usr/local/share/doc/siliconsneaker2/Screenshot_bear.png", "644"],
  ["./doc/Screenshot.png", "/usr/local/share/doc/siliconsneaker2/Screenshot.png", "644"],
