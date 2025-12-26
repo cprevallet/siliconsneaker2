@@ -35,7 +35,7 @@ assets = [
  ["target/release/siliconsneaker2", "usr/local/bin/", "755"],
  ["./siliconsneaker2.desktop", "/usr/share/applications/siliconsneaker2.desktop", "644"],
  ["./icons/siliconsneaker2.svg", "/usr/share/icons/hicolor/scalable/siliconsneaker2.svg", "644"],
- ["./doc/README.md", "usr/local/share/doc/siliconsneaker2/README.md", "644"],
+ ["README.md", "usr/local/share/doc/siliconsneaker2/README.md", "644"],
  ["./doc/GarminConnect.png", "/usr/local/share/doc/siliconsneaker2/GarminConnect.png", "644"],
  ["./doc/GarminMounted.png", "/usr/local/share/doc/siliconsneaker2/GarminMounted.png", "644"],
  ["./doc/help.html", "/usr/local/share/doc/siliconsneaker2/help.html", "644"],
