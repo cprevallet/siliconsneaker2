@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.26">
-<title>SiliconSneaker2 User Documentation v0.9.0-alpha</title>
+<title>SiliconSneaker2 User Documentation v0.10.1-alpha</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -433,51 +433,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 #footer-text{color:rgba(0,0,0,.6);font-size:.9em}}
 @media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
 </style>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body class="article">
 <div id="header">
-<h1>SiliconSneaker2 User Documentation v0.9.0-alpha</h1>
-<div id="toc" class="toc">
-<div id="toctitle">Table of Contents</div>
-<ul class="sectlevel1">
-<li><a href="#_program_purpose">1. Program Purpose</a>
-<ul class="sectlevel2">
-<li><a href="#_feature_summary">1.1. Feature Summary</a></li>
-<li><a href="#_history">1.2. History</a></li>
-</ul>
-</li>
-<li><a href="#_installation">2. Installation</a>
-<ul class="sectlevel2">
-<li><a href="#_installing_on_windows64_bit">2.1. Installing on Windows(64 bit)</a></li>
-<li><a href="#_installing_on_gnulinux64_bit">2.2. Installing on GNU/Linux(64 bit)</a></li>
-</ul>
-</li>
-<li><a href="#_making_fit_files_available_on_a_pc">3. Making FIT files Available On a PC</a>
-<ul class="sectlevel2">
-<li><a href="#_from_a_watch">3.1. From a watch</a></li>
-<li><a href="#_from_an_online_service">3.2. From an online service</a></li>
-</ul>
-</li>
-<li><a href="#_locating_and_starting_the_application">4. Locating and Starting the Application</a></li>
-<li><a href="#_loading_the_fit_file">5. Loading the Fit File</a></li>
-<li><a href="#_usage">6. Usage</a>
-<ul class="sectlevel2">
-<li><a href="#_using_the_application">6.1. Using the application</a></li>
-<li><a href="#_troubleshooting">6.2. Troubleshooting</a></li>
-<li><a href="#_ending_the_application">6.3. Ending the application</a></li>
-</ul>
-</li>
-<li><a href="#_uninstall">7. Uninstall</a></li>
-<li><a href="#_online_support">8. Online Support</a>
-<ul class="sectlevel2">
-<li><a href="#_issues">8.1. Issues</a></li>
-<li><a href="#_enhancements">8.2. Enhancements</a></li>
-</ul>
-</li>
-<li><a href="#_license">9. License</a></li>
-</ul>
-</div>
+<h1>SiliconSneaker2 User Documentation v0.10.1-alpha</h1>
 </div>
 <div id="content">
 <div id="preamble">
@@ -553,7 +512,7 @@ much of the flavor of the original but makes some new design choices.</p>
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-important" title="Important"></i>
+<div class="title">Important</div>
 </td>
 <td class="content">
 <div class="paragraph">
@@ -565,7 +524,7 @@ much of the flavor of the original but makes some new design choices.</p>
 <p>Builds are available for 64-bit versions of Microsoft Windows (10 and above).  Linux must currently be built from source. MacOS/OSX builds are not available or supported.</p>
 </li>
 <li>
-<p>A 64-bit Intel-compatible processor with approximately 100MB of free disk space and 300MB of available RAM free for the program.</p>
+<p>A 64-bit Intel-compatible processor with approximately 300MB of free disk space and 300MB of available RAM free for the program.</p>
 </li>
 <li>
 <p>Administrator/root privileges are necessary for installation.</p>
@@ -670,8 +629,8 @@ double-click on the setup routine to start.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-console" data-lang="console">$ sudo apt install git cargo rustc
-$ git clone https://github.com/cprevallet/siliconsneaker2
+<pre class="highlight"><code class="language-console" data-lang="console"># $ sudo apt install git cargo rustc pkg-config libglib2.0-dev libcairo2-dev libgdk-pixbuf-2.0-dev libpango1.0-dev libgraphene-1.0-dev libgtk-4-dev libshumate-dev
+# $ git clone https://github.com/cprevallet/siliconsneaker2
 Cloning into 'siliconsneaker2'...
 remote: Enumerating objects: 1017, done.
 remote: Counting objects: 100% (1017/1017), done.
@@ -835,7 +794,7 @@ Click it to start the program.</p>
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-important" title="Important"></i>
+<div class="title">Important</div>
 </td>
 <td class="content">
 <div class="paragraph">
@@ -881,7 +840,7 @@ Side note: SiliconSneaker2 has only read access to the FIT file and cannot chang
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
+<div class="title">Tip</div>
 </td>
 <td class="content">
 <div class="paragraph">
@@ -920,7 +879,7 @@ to select your preferred unit system.  The preferred unit system will also be re
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
+<div class="title">Tip</div>
 </td>
 <td class="content">
 <div class="paragraph">
@@ -935,7 +894,7 @@ useful tooltips describing the function of the interface widgets.  Let them guid
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
+<div class="title">Tip</div>
 </td>
 <td class="content">
 <div class="paragraph">
@@ -955,7 +914,7 @@ edge to restore the view within it.  Similarly the Summary and Graph panes
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
+<div class="title">Tip</div>
 </td>
 <td class="content">
 <div class="paragraph">
@@ -972,7 +931,7 @@ required sensor to supply the data.</p>
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
+<div class="title">Tip</div>
 </td>
 <td class="content">
 <div class="paragraph">
@@ -987,7 +946,7 @@ page up and page down keys control the movement from the keyboard.</p>
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
+<div class="title">Tip</div>
 </td>
 <td class="content">
 <div class="paragraph">
@@ -1001,7 +960,7 @@ page up and page down keys control the movement from the keyboard.</p>
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
+<div class="title">Tip</div>
 </td>
 <td class="content">
 <div class="paragraph">
@@ -1015,7 +974,7 @@ page up and page down keys control the movement from the keyboard.</p>
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
+<div class="title">Tip</div>
 </td>
 <td class="content">
 <div class="paragraph">
@@ -1030,7 +989,7 @@ the newly selected unit system.</p>
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
+<div class="title">Tip</div>
 </td>
 <td class="content">
 <div class="paragraph">
@@ -1048,7 +1007,7 @@ map will change to something indicate the holiday.</p>
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
+<div class="title">Tip</div>
 </td>
 <td class="content">
 <div class="paragraph">
@@ -1068,7 +1027,7 @@ activities in the same location.</p>
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
+<div class="title">Tip</div>
 </td>
 <td class="content">
 <div class="paragraph">
@@ -1083,7 +1042,7 @@ out is often enough to make this happen.  Alternatively, resize the map pane.</p
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
+<div class="title">Tip</div>
 </td>
 <td class="content">
 <div class="paragraph">
@@ -1253,7 +1212,7 @@ Copyright (c) libshumate The Gnome Foundation</pre>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2025-12-23 13:25:39 -0600
+Last updated 2025-12-26 12:15:30 -0600
 </div>
 </div>
 </body>
