@@ -4,13 +4,6 @@ use unic_langid::LanguageIdentifier;
 
 thread_local! {
     static BUNDLE: RefCell<FluentBundle<FluentResource>> = RefCell::new({
-        let lang_id: LanguageIdentifier = "fr-FR".parse().expect("Parsing failed");
-        let mut bundle = FluentBundle::new(vec![lang_id]);
-
-        let ftl_string = include_str!("../i18n/en-US/gui.ftl").to_string();
-        let resource = FluentResource::try_new(ftl_string)
-            .expect("Failed to parse an FTL string.");
-        bundle.add_resource(resource).expect("Failed to add FTL resources.");// Detect system locale, fallback to en-US
     let locale = sys_locale::get_locale().unwrap_or_else(|| String::from("en-US"));
     let lang_id: LanguageIdentifier = locale.parse().expect("Parsing failed");
 
