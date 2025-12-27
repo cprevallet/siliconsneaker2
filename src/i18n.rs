@@ -4,9 +4,9 @@ use unic_langid::LanguageIdentifier;
 
 thread_local! {
     static BUNDLE: RefCell<FluentBundle<FluentResource>> = RefCell::new({
-    let mut locale = sys_locale::get_locale().unwrap_or_else(|| String::from("en-US"));
+    let mut locale = sys_locale::get_locale().unwrap_or_else(|| String::from("en-US.utf8"));
     // Debian (or Gnome) sets this rather bogus default on the testbed. We'll work around.
-    if locale == "C.UTF8" {locale = String::from("en_US.utf8")};
+    if locale == "C.UTF8" {locale = String::from("en-US.utf8")};
     let lang_id: LanguageIdentifier = locale.parse().expect("Parsing failed");
 
     let mut bundle = FluentBundle::new(vec![lang_id.clone()]);
