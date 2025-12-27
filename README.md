@@ -21,6 +21,7 @@ Support for TCX files has not been provided in this version.  The original Silic
 - Zoom functions for the graphs and map.
 - Support for multiple unit systems is provided.
 - Support for multiple languages is provided English, French, Spanish.
+- Support for multiple operating systems is provided Windows 10/11 and Debian Linux.
 - Individual measurement readings and position can be displayed in the graph and on the map.
 - Text report on numerous measurements on a per-lap and per-activity basis.
 - The program is GPL licensed and open-source.
