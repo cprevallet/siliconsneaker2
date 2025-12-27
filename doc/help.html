@@ -453,34 +453,40 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_installing_on_debian_linux64_bit">2.2. Installing on Debian Linux(64 bit)</a></li>
 </ul>
 </li>
-<li><a href="#_making_fit_files_available_on_a_pc">3. Making FIT files Available On a PC</a>
+<li><a href="#_language_support">3. Language Support</a>
 <ul class="sectlevel2">
-<li><a href="#_from_a_watch">3.1. From a watch</a></li>
-<li><a href="#_from_an_online_service">3.2. From an online service</a></li>
+<li><a href="#_windows">3.1. Windows</a></li>
+<li><a href="#_debian_linux">3.2. Debian Linux</a></li>
 </ul>
 </li>
-<li><a href="#_locating_and_starting_the_application">4. Locating and Starting the Application</a></li>
-<li><a href="#_loading_the_fit_file">5. Loading the Fit File</a></li>
-<li><a href="#_usage">6. Usage</a>
+<li><a href="#_making_fit_files_available_on_a_pc">4. Making FIT files Available On a PC</a>
 <ul class="sectlevel2">
-<li><a href="#_using_the_application">6.1. Using the application</a></li>
-<li><a href="#_troubleshooting">6.2. Troubleshooting</a></li>
-<li><a href="#_ending_the_application">6.3. Ending the application</a></li>
+<li><a href="#_from_a_watch">4.1. From a watch</a></li>
+<li><a href="#_from_an_online_service">4.2. From an online service</a></li>
 </ul>
 </li>
-<li><a href="#_uninstall">7. Uninstall</a>
+<li><a href="#_locating_and_starting_the_application">5. Locating and Starting the Application</a></li>
+<li><a href="#_loading_the_fit_file">6. Loading the Fit File</a></li>
+<li><a href="#_usage">7. Usage</a>
 <ul class="sectlevel2">
-<li><a href="#_windows">7.1. Windows</a></li>
-<li><a href="#_debian_linux">7.2. Debian Linux</a></li>
+<li><a href="#_using_the_application">7.1. Using the application</a></li>
+<li><a href="#_troubleshooting">7.2. Troubleshooting</a></li>
+<li><a href="#_ending_the_application">7.3. Ending the application</a></li>
 </ul>
 </li>
-<li><a href="#_online_support">8. Online Support</a>
+<li><a href="#_uninstall">8. Uninstall</a>
 <ul class="sectlevel2">
-<li><a href="#_issues">8.1. Issues</a></li>
-<li><a href="#_enhancements">8.2. Enhancements</a></li>
+<li><a href="#_windows_2">8.1. Windows</a></li>
+<li><a href="#_debian_linux_2">8.2. Debian Linux</a></li>
 </ul>
 </li>
-<li><a href="#_license">9. License</a></li>
+<li><a href="#_online_support">9. Online Support</a>
+<ul class="sectlevel2">
+<li><a href="#_issues">9.1. Issues</a></li>
+<li><a href="#_enhancements">9.2. Enhancements</a></li>
+</ul>
+</li>
+<li><a href="#_license">10. License</a></li>
 </ul>
 </div>
 </div>
@@ -713,7 +719,47 @@ $ ./target/release/siliconsneaker2
 </div>
 </div>
 <div class="sect1">
-<h2 id="_making_fit_files_available_on_a_pc">3. Making FIT files Available On a PC</h2>
+<h2 id="_language_support">3. Language Support</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As of this writing, SiliconSneaker2 has support for three languages: English, French, and Spanish.  The program uses the system&#8217;s
+"locale" language setting to determine the language to use. If no settings are applied, the default will be English.</p>
+</div>
+<div class="sect2">
+<h3 id="_windows">3.1. Windows</h3>
+<div class="paragraph">
+<p>You can change your region in the Settings App - Time and Language - Region.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_debian_linux">3.2. Debian Linux</h3>
+<div class="paragraph">
+<p>Run locale -a to get a list of the locale names suitable for use in environment variables.</p>
+</div>
+<div class="paragraph">
+<p>Add a line like this to your /etc/profile file:</p>
+</div>
+<div class="paragraph">
+<p>"${LANG:=fr_FR.utf8}"; export LANG</p>
+</div>
+<div class="paragraph">
+<p>where fr_FR.utf8 is the locale you want to use as a default.</p>
+</div>
+<div class="paragraph">
+<p>Alternatively, a language may be selected for a single invocation by setting an environmental variable. For example:</p>
+</div>
+<div class="paragraph">
+<p>env LANG=es_ES.UTF-8 siliconsneaker2</p>
+</div>
+<div class="paragraph">
+<p>will invoke SiliconSneaker2 with Spanish for a single time.</p>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_making_fit_files_available_on_a_pc">4. Making FIT files Available On a PC</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Now that the program has been installed, SiliconSneaker2 needs information on your activity in the form of a Fit files generated
@@ -722,7 +768,7 @@ In general, Fit files may be made available in one of two ways - directly
 from a device or downloaded through an online service.</p>
 </div>
 <div class="sect2">
-<h3 id="_from_a_watch">3.1. From a watch</h3>
+<h3 id="_from_a_watch">4.1. From a watch</h3>
 <div class="ulist">
 <ul>
 <li>
@@ -792,9 +838,9 @@ given here will be, by necessity, incomplete. Additional information gladly acce
 </div>
 </div>
 <div class="sect2">
-<h3 id="_from_an_online_service">3.2. From an online service</h3>
+<h3 id="_from_an_online_service">4.2. From an online service</h3>
 <div class="sect3">
-<h4 id="_strava">3.2.1. Strava</h4>
+<h4 id="_strava">4.2.1. Strava</h4>
 <div class="ulist">
 <ul>
 <li>
@@ -810,7 +856,7 @@ given here will be, by necessity, incomplete. Additional information gladly acce
 </div>
 </div>
 <div class="sect3">
-<h4 id="_garmin_connect">3.2.2. Garmin Connect</h4>
+<h4 id="_garmin_connect">4.2.2. Garmin Connect</h4>
 <div class="ulist">
 <ul>
 <li>
@@ -830,7 +876,7 @@ given here will be, by necessity, incomplete. Additional information gladly acce
 </div>
 </div>
 <div class="sect1">
-<h2 id="_locating_and_starting_the_application">4. Locating and Starting the Application</h2>
+<h2 id="_locating_and_starting_the_application">5. Locating and Starting the Application</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>On Linux, there should be a menu item to start the application after installation.</p>
@@ -872,7 +918,7 @@ Click it to start the program.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_loading_the_fit_file">5. Loading the Fit File</h2>
+<h2 id="_loading_the_fit_file">6. Loading the Fit File</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Now that the files are available to the PC by whatever means.  It&#8217;s time to load them into SiliconSneaker2.  It&#8217;s also a good time
@@ -926,10 +972,10 @@ to select your preferred unit system.  The preferred unit system will also be re
 </div>
 </div>
 <div class="sect1">
-<h2 id="_usage">6. Usage</h2>
+<h2 id="_usage">7. Usage</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_using_the_application">6.1. Using the application</h3>
+<h3 id="_using_the_application">7.1. Using the application</h3>
 <div class="admonitionblock tip">
 <table>
 <tr>
@@ -1057,7 +1103,7 @@ map will change to something indicate the holiday.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_troubleshooting">6.2. Troubleshooting</h3>
+<h3 id="_troubleshooting">7.2. Troubleshooting</h3>
 <div class="admonitionblock tip">
 <table>
 <tr>
@@ -1109,7 +1155,7 @@ out is often enough to make this happen.  Alternatively, resize the map pane.</p
 </div>
 </div>
 <div class="sect2">
-<h3 id="_ending_the_application">6.3. Ending the application</h3>
+<h3 id="_ending_the_application">7.3. Ending the application</h3>
 <div class="paragraph">
 <p>There is no dedicated exit button.  Simply close the window (Alt-F4 or Window Control).</p>
 </div>
@@ -1118,10 +1164,10 @@ out is often enough to make this happen.  Alternatively, resize the map pane.</p
 </div>
 </div>
 <div class="sect1">
-<h2 id="_uninstall">7. Uninstall</h2>
+<h2 id="_uninstall">8. Uninstall</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_windows">7.1. Windows</h3>
+<h3 id="_windows_2">8.1. Windows</h3>
 <div class="paragraph">
 <p>When you installed the program a link was created in the start-menu to uninstall.</p>
 </div>
@@ -1145,7 +1191,7 @@ out is often enough to make this happen.  Alternatively, resize the map pane.</p
 </div>
 </div>
 <div class="sect2">
-<h3 id="_debian_linux">7.2. Debian Linux</h3>
+<h3 id="_debian_linux_2">8.2. Debian Linux</h3>
 <div class="paragraph">
 <p>Debian uninstalls are from the terminal using the APT command as root.</p>
 </div>
@@ -1160,10 +1206,10 @@ out is often enough to make this happen.  Alternatively, resize the map pane.</p
 </div>
 </div>
 <div class="sect1">
-<h2 id="_online_support">8. Online Support</h2>
+<h2 id="_online_support">9. Online Support</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_issues">8.1. Issues</h3>
+<h3 id="_issues">9.1. Issues</h3>
 <div class="paragraph">
 <p>The tracking system at Github will be used to report problems and
 suggest enhancements. As SiliconSneaker2 runs under a variety of versions,
@@ -1181,7 +1227,7 @@ Report this and the operating system when submitting your issue.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_enhancements">8.2. Enhancements</h3>
+<h3 id="_enhancements">9.2. Enhancements</h3>
 <div class="paragraph">
 <p>The above tracking system will also be used to identify potential
 enhancements and improvements. If you have an idea for improvements,
@@ -1201,7 +1247,7 @@ pull request at:</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_license">9. License</h2>
+<h2 id="_license">10. License</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>This software is governed by the following software license:</p>
@@ -1282,7 +1328,7 @@ Copyright (c) libshumate The Gnome Foundation</pre>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2025-12-27 09:04:50 -0600
+Last updated 2025-12-27 09:40:49 -0600
 </div>
 </div>
 </body>
