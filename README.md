@@ -11,7 +11,7 @@ Note:
 Support for TCX files has not been provided in this version.  The original SiliconSneaker
 (https://github.com/cprevallet/siliconsneaker)  may be used for viewing files of this type.  
 
-![Screenshot](https://github.com/cprevallet/siliconsneaker2/blob/main/Screenshot.png?raw=true)
+![Screenshot](https://github.com/cprevallet/siliconsneaker2/blob/main/doc/Screenshot.png?raw=true)
 
 
 # Features
@@ -20,6 +20,7 @@ Support for TCX files has not been provided in this version.  The original Silic
 - A map indicating position is provided via a GPS generated path.
 - Zoom functions for the graphs and map.
 - Support for multiple unit systems is provided.
+- Support for multiple languages is provided English, French, Spanish.
 - Individual measurement readings and position can be displayed in the graph and on the map.
 - Text report on numerous measurements on a per-lap and per-activity basis.
 - The program is GPL licensed and open-source.
@@ -28,4 +29,4 @@ Support for TCX files has not been provided in this version.  The original Silic
 https://youtu.be/JY-fb4hMTX8
 
 # Documentation
-(https://github.com/cprevallet/siliconsneaker2/blob/main/doc/SiliconSneaker2%20User%20Documentation%20v0.4.2-alpha.pdf)
+https://github.com/cprevallet/siliconsneaker2/blob/main/doc/SiliconSneaker2%20User%20Documentation%20v0.11.0-alpha.pdf
